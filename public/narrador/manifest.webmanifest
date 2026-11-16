@@ -1,0 +1,17 @@
+{
+  "name": "Legatum — Hablar con Julián",
+  "short_name": "Legatum",
+  "description": "Tus recuerdos, contados con calma.",
+  "start_url": "/narrador/",
+  "scope": "/narrador/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f1eee9",
+  "theme_color": "#f1eee9",
+  "lang": "es",
+  "icons": [
+    { "src": "/narrador/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/narrador/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/narrador/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

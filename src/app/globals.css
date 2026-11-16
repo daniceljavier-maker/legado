@@ -154,3 +154,22 @@
 .marquee { animation: marquee 60s linear infinite; }
 .marquee:hover { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .float-a, .float-b, .marquee { animation: none; } }
+
+/* App del narrador: latido sin cambio de opacidad */
+@keyframes latido {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+.animate-latido {
+  animation: latido 3.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-latido {
+    animation: none;
+  }
+}
