@@ -1,5 +1,5 @@
 /* Legatum · service worker mínimo: deja la app abrirse sin red. */
-const CACHE = "legatum-narrador-v1";
+const CACHE = "legatum-narrador-v2";
 const BASE = ["/narrador/", "/narrador/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
@@ -20,7 +20,7 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     fetch(req)
       .then((res) => {
-        if (res.ok && (url.pathname.startsWith("/narrador") || url.pathname.startsWith("/_next/") || url.pathname.startsWith("/assets-next/"))) {
+        if (res.status === 200 && (url.pathname.startsWith("/narrador") || url.pathname.startsWith("/_next/") || url.pathname.startsWith("/assets-next/"))) {
           const copia = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copia));
         }

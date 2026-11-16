@@ -1,3 +1,5 @@
+import type { Pais } from "./guion";
+
 /**
  * Modelo de la app del narrador (pieza 2). Hoy todo vive en el navegador;
  * la voz real de Julián (ElevenLabs) y la persistencia (LG-020) llegan después.
@@ -17,6 +19,7 @@ export type Letra = "normal" | "grande" | "enorme";
 export type Tema = {
   id: string;
   titulo: string;
+  /** Ids de línea del guion (ver guion.ts); el texto y el audio dependen del país. */
   preguntas: string[];
   delicado?: boolean;
 };
@@ -32,6 +35,8 @@ export type EstadoNarrador = {
   v: 1;
   nombre: string;
   consentido: boolean;
+  /** Acento de Julián: Leo (México) o Rafa (España). */
+  pais: Pais;
   letra: Letra;
   pausado: boolean;
   sesiones: Sesion[];
@@ -42,50 +47,28 @@ export const TEMAS: Tema[] = [
   {
     id: "infancia",
     titulo: "Tu infancia",
-    preguntas: [
-      "Cuéntame dónde naciste y cómo era la casa en la que creciste.",
-      "¿Qué recuerdas de tus padres cuando eras pequeña o pequeño?",
-      "¿Había algún olor, comida o sonido que te lleve de vuelta a esos años?",
-      "¿Quién te cuidaba? ¿Qué te enseñó?",
-    ],
+    preguntas: ["infancia1", "infancia2", "infancia3", "infancia4"],
   },
   {
     id: "juventud",
     titulo: "Tus años de juventud",
-    preguntas: [
-      "¿Cómo era un día normal cuando tenías veinte años?",
-      "¿Cuál fue tu primer trabajo? ¿Cómo lo conseguiste?",
-      "Háblame de tus amistades de entonces.",
-      "¿Hubo alguna decisión de esa época que te cambió la vida?",
-    ],
+    preguntas: ["juventud1", "juventud2", "juventud3", "juventud4"],
   },
   {
     id: "familia",
     titulo: "Tu familia",
-    preguntas: [
-      "¿Cómo conociste a tu pareja?",
-      "¿Qué recuerdas del día en que nació tu primer hijo o hija?",
-      "¿Qué tradición de tu familia te gustaría que no se perdiera?",
-      "¿Qué te gustaría que supieran tus nietos de ti?",
-    ],
+    preguntas: ["familia1", "familia2", "familia3", "familia4"],
   },
   {
     id: "oficio",
     titulo: "El trabajo y los oficios",
-    preguntas: [
-      "¿A qué te dedicaste la mayor parte de tu vida?",
-      "¿Qué aprendiste trabajando que no se aprende en ningún libro?",
-      "¿Hubo alguien que te enseñara el oficio?",
-    ],
+    preguntas: ["oficio1", "oficio2", "oficio3"],
   },
   {
     id: "delicado",
     titulo: "Lo que cuesta contar",
     delicado: true,
-    preguntas: [
-      "Si quieres, cuéntame algo que te haya costado y de lo que hayas salido.",
-      "¿Hay algo que quisieras dejar dicho, aunque no sea fácil?",
-    ],
+    preguntas: ["delicado1", "delicado2"],
   },
 ];
 
@@ -93,6 +76,7 @@ export const ESTADO_VACIO: EstadoNarrador = {
   v: 1,
   nombre: "",
   consentido: false,
+  pais: "mx",
   letra: "grande",
   pausado: false,
   sesiones: [],

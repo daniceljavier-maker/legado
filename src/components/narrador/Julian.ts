@@ -1,35 +1,82 @@
 "use client";
 
+import { ECOS, texto, type Pais } from "@/lib/guion";
+
 /**
- * Voz y oído de Julián, versión provisional.
- * - hablar(): usa la voz del navegador hasta que llegue ElevenLabs (LG-022).
- * - Oido: nivel del micrófono con Web Audio para que la persona vea que se la oye.
- * No se graba ni se envía nada.
+ * Voz y oído de Julián.
+ * - decir(): reproduce el audio pregrabado (ElevenLabs: Leo para México, Rafa para España).
+ *   Si el audio no carga, cae a la voz del navegador para no dejar a la persona en silencio.
+ * - Oido: nivel del micrófono con Web Audio. No se graba ni se envía nada.
  */
 
-export function hablar(texto: string, alTerminar?: () => void) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-    alTerminar?.();
+let el: HTMLAudioElement | null = null;
+let ultimoEco = "";
+
+function audio(): HTMLAudioElement {
+  // Un único elemento: en iOS solo se puede reproducir tras un gesto del usuario,
+  // y reutilizarlo permite encadenar audios sin nuevos gestos.
+  if (!el) {
+    el = new Audio();
+    el.preload = "auto";
+  }
+  return el;
+}
+
+function hablarNavegador(txt: string, pais: Pais, alTerminar: () => void) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window) || !txt) {
+    alTerminar();
     return;
   }
   const synth = window.speechSynthesis;
   synth.cancel();
-  const u = new SpeechSynthesisUtterance(texto);
-  u.lang = "es-ES";
-  u.rate = 0.9;
-  u.pitch = 0.95;
-  const voces = synth.getVoices().filter((v) => v.lang.startsWith("es"));
-  const preferida =
-    voces.find((v) => /es-(ES|MX)/i.test(v.lang) && /male|hombre|jorge|diego|pablo|enrique|carlos|juan/i.test(v.name)) ??
-    voces.find((v) => /es-(ES|MX)/i.test(v.lang)) ??
-    voces[0];
-  if (preferida) u.voice = preferida;
-  u.onend = () => alTerminar?.();
-  u.onerror = () => alTerminar?.();
+  const u = new SpeechSynthesisUtterance(txt);
+  u.lang = pais === "mx" ? "es-MX" : "es-ES";
+  u.rate = 0.92;
+  u.onend = alTerminar;
+  u.onerror = alTerminar;
   synth.speak(u);
 }
 
+/** Reproduce una línea del guion. `alTerminar` se llama una sola vez. */
+export function decir(pais: Pais, id: string, alTerminar?: () => void) {
+  const a = audio();
+  callar();
+  let hecho = false;
+  const fin = () => {
+    if (hecho) return;
+    hecho = true;
+    alTerminar?.();
+  };
+  const respaldo = () => hablarNavegador(texto(pais, id), pais, fin);
+  a.onended = fin;
+  a.onerror = respaldo;
+  a.src = `/narrador/voz/${pais}/${id}.mp3`;
+  a.play().catch(respaldo);
+}
+
+/** Reproduce varias líneas seguidas. */
+export function secuencia(pais: Pais, ids: string[], alTerminar?: () => void) {
+  const [primero, ...resto] = ids;
+  if (!primero) {
+    alTerminar?.();
+    return;
+  }
+  decir(pais, primero, resto.length ? () => secuencia(pais, resto, alTerminar) : alTerminar);
+}
+
+/** Un «mmm, qué bonito» al azar, distinto del anterior. */
+export function ecoAlAzar(): string {
+  const opciones = ECOS.filter((e) => e !== ultimoEco);
+  ultimoEco = opciones[Math.floor(Math.random() * opciones.length)];
+  return ultimoEco;
+}
+
 export function callar() {
+  if (el) {
+    el.onended = null;
+    el.onerror = null;
+    el.pause();
+  }
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }

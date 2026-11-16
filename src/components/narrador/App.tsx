@@ -18,7 +18,8 @@ import {
   type Privacidad,
   type Tema,
 } from "@/lib/narrador";
-import { Oido, callar, hablar } from "./Julian";
+import { texto, type Pais } from "@/lib/guion";
+import { Oido, callar, decir, ecoAlAzar, secuencia } from "./Julian";
 
 /* ---------- piezas comunes ---------- */
 
@@ -73,7 +74,10 @@ export function NarradorApp() {
     // Si el familiar ya registró un nombre en este navegador, lo usamos.
     const reg = leerRegistro();
     const nombre = est.nombre || reg?.narrador.apodo || reg?.narrador.nombre || "";
-    const inicial = { ...est, nombre };
+    const reg_pais = reg?.narrador.pais === "ES" ? "es" : reg?.narrador.pais === "MX" ? "mx" : null;
+    const del_equipo: Pais = navigator.language.toLowerCase().startsWith("es-es") ? "es" : "mx";
+    const pais: Pais = est.sesiones.length || est.consentido ? est.pais : (reg_pais ?? del_equipo);
+    const inicial = { ...est, nombre, pais };
     setE(inicial);
     setPantalla(inicial.consentido ? "inicio" : "bienvenida");
   }, []);
@@ -104,6 +108,8 @@ export function NarradorApp() {
         {pantalla === "bienvenida" && (
           <Bienvenida
             nombre={e.nombre}
+            pais={e.pais}
+            onPais={(pais) => actualizar({ pais })}
             onNombre={(nombre) => actualizar({ nombre })}
             onListo={() => {
               actualizar({ consentido: true });
@@ -125,6 +131,7 @@ export function NarradorApp() {
         {pantalla === "sesion" && temaActual && (
           <SesionVoz
             tema={temaActual}
+            pais={e.pais}
             onTerminar={(segundos, reservado) => {
               const sesion = { temaId: temaActual.id, inicio: new Date().toISOString(), segundos, reservado };
               actualizar({ sesiones: [...e.sesiones, sesion] });
@@ -136,6 +143,7 @@ export function NarradorApp() {
         {pantalla === "cierre" && ultima && (
           <Cierre
             nombre={e.nombre}
+            pais={e.pais}
             ultima={ultima}
             onRecuerdos={() => setPantalla("recuerdos")}
             onInicio={() => setPantalla("inicio")}
@@ -151,6 +159,7 @@ export function NarradorApp() {
         {pantalla === "ajustes" && (
           <Ajustes
             e={e}
+            onPais={(pais) => actualizar({ pais })}
             onLetra={(letra) => actualizar({ letra })}
             onPausa={(pausado) => actualizar({ pausado })}
             onVolver={() => setPantalla("inicio")}
@@ -165,10 +174,14 @@ export function NarradorApp() {
 
 function Bienvenida({
   nombre,
+  pais,
+  onPais,
   onNombre,
   onListo,
 }: {
   nombre: string;
+  pais: Pais;
+  onPais: (p: Pais) => void;
   onNombre: (n: string) => void;
   onListo: () => void;
 }) {
@@ -189,11 +202,17 @@ function Bienvenida({
     return () => cancelAnimationFrame(raf);
   }, [mic]);
 
-  useEffect(() => () => oido.current?.cerrar(), []);
+  useEffect(
+    () => () => {
+      oido.current?.cerrar();
+      callar();
+    },
+    [],
+  );
 
   const probarVoz = () => {
     setOye("probando");
-    hablar(`Hola${nombre ? `, ${nombre}` : ""}. Soy Julián. Si me oyes bien, ya estamos listos.`, () => setOye("si"));
+    decir(pais, "prueba", () => setOye("si"));
   };
 
   const probarMic = async () => {
@@ -230,6 +249,17 @@ function Bienvenida({
               className="min-h-16 rounded-xl bg-paper px-5 text-2xl border-2 border-transparent focus:border-bark outline-none"
             />
           </label>
+          <div className="flex flex-col gap-2">
+            <span className="text-lg text-smoke">¿Cómo prefieres que hable yo?</span>
+            <div className="flex gap-2" role="group" aria-label="Acento de Julián">
+              <Opcion activa={pais === "mx"} onClick={() => onPais("mx")}>
+                De México
+              </Opcion>
+              <Opcion activa={pais === "es"} onClick={() => onPais("es")}>
+                De España
+              </Opcion>
+            </div>
+          </div>
         </div>
       )}
 
@@ -381,7 +411,15 @@ function Fila({ children, onClick }: { children: React.ReactNode; onClick: () =>
 
 /* ---------- 3 · sesión de voz ---------- */
 
-function SesionVoz({ tema, onTerminar }: { tema: Tema; onTerminar: (segundos: number, reservado: number) => void }) {
+function SesionVoz({
+  tema,
+  pais,
+  onTerminar,
+}: {
+  tema: Tema;
+  pais: Pais;
+  onTerminar: (segundos: number, reservado: number) => void;
+}) {
   const [fase, setFase] = useState<"preparando" | "habla" | "escucha" | "pausa">("preparando");
   const [i, setI] = useState(0);
   const [seg, setSeg] = useState(0);
@@ -393,7 +431,7 @@ function SesionVoz({ tema, onTerminar }: { tema: Tema; onTerminar: (segundos: nu
   const faseRef = useRef(fase);
   faseRef.current = fase;
 
-  const pregunta = tema.preguntas[Math.min(i, tema.preguntas.length - 1)];
+  const pregunta = texto(pais, tema.preguntas[Math.min(i, tema.preguntas.length - 1)]);
   const esUltima = i >= tema.preguntas.length - 1;
 
   // micrófono
@@ -427,12 +465,15 @@ function SesionVoz({ tema, onTerminar }: { tema: Tema; onTerminar: (segundos: nu
     return () => clearInterval(id);
   }, []);
 
-  const decir = useCallback((texto: string) => {
-    setFase("habla");
-    hablar(texto, () => setFase("escucha"));
-  }, []);
+  const hablarYEscuchar = useCallback(
+    (ids: string[]) => {
+      setFase("habla");
+      secuencia(pais, ids, () => setFase("escucha"));
+    },
+    [pais],
+  );
 
-  const empezar = () => decir(`${pregunta}`);
+  const empezar = () => hablarYEscuchar(["intro", tema.preguntas[0]]);
 
   const siguiente = () => {
     if (esUltima) {
@@ -442,13 +483,14 @@ function SesionVoz({ tema, onTerminar }: { tema: Tema; onTerminar: (segundos: nu
     }
     const n = i + 1;
     setI(n);
-    decir(tema.preguntas[n]);
+    hablarYEscuchar([ecoAlAzar(), tema.preguntas[n]]);
   };
 
   const noLoCuentes = () => {
     setReservado((r) => r + 1);
     setAviso("Entendido. Esto queda solo para ti.");
     setTimeout(() => setAviso(null), 3000);
+    hablarYEscuchar(["reservado"]);
   };
 
   const pausar = () => {
@@ -457,6 +499,7 @@ function SesionVoz({ tema, onTerminar }: { tema: Tema; onTerminar: (segundos: nu
     } else {
       callar();
       setFase("pausa");
+      decir(pais, "pausa");
     }
   };
 
@@ -546,19 +589,21 @@ function Orbe({ fase, nivel }: { fase: string; nivel: number }) {
 
 function Cierre({
   nombre,
+  pais,
   ultima,
   onRecuerdos,
   onInicio,
 }: {
   nombre: string;
+  pais: Pais;
   ultima: { tema: Tema; segundos: number; reservado: number };
   onRecuerdos: () => void;
   onInicio: () => void;
 }) {
   useEffect(() => {
-    hablar(`Gracias${nombre ? `, ${nombre}` : ""}. Lo que me has contado hoy ya está a salvo.`);
+    decir(pais, "cierre");
     return () => callar();
-  }, [nombre]);
+  }, [pais]);
 
   return (
     <>
@@ -662,11 +707,13 @@ function Opcion({ activa, onClick, children }: { activa: boolean; onClick: () =>
 
 function Ajustes({
   e,
+  onPais,
   onLetra,
   onPausa,
   onVolver,
 }: {
   e: EstadoNarrador;
+  onPais: (p: Pais) => void;
   onLetra: (l: Letra) => void;
   onPausa: (p: boolean) => void;
   onVolver: () => void;
@@ -701,11 +748,16 @@ function Ajustes({
         </div>
 
         <div className={card}>
-          <span className="text-[1.35rem] font-semibold">Voz de Julián</span>
-          <span className="text-lg text-smoke leading-snug">
-            Por ahora usa la voz de tu teléfono. La voz propia de Julián llegará en la siguiente versión.
-          </span>
-          <button onClick={() => hablar("Hola. Soy Julián. Así sueno en tu teléfono.")} className={btnLight}>
+          <span className="text-[1.35rem] font-semibold">Cómo habla Julián</span>
+          <div className="flex gap-2" role="group" aria-label="Acento de Julián">
+            <Opcion activa={e.pais === "mx"} onClick={() => onPais("mx")}>
+              De México
+            </Opcion>
+            <Opcion activa={e.pais === "es"} onClick={() => onPais("es")}>
+              De España
+            </Opcion>
+          </div>
+          <button onClick={() => decir(e.pais, "ajustes")} className={btnLight}>
             Escuchar
           </button>
         </div>
