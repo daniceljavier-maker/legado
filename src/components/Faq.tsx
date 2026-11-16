@@ -1,5 +1,6 @@
 "use client";
 
+import { MARCA } from "@/lib/marca";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -25,8 +26,8 @@ const ITEMS = [
     a: "Ahora mismo estamos en una beta cerrada y gratuita con las primeras familias. El precio se anunciará más adelante.",
   },
   {
-    q: "¿Por qué se llama Agnis?",
-    a: "Por el fuego que una familia mantiene encendido y se pasa de mano en mano: lo que una generación sabe y la siguiente quiere conservar. El nombre es provisional.",
+    q: `¿Por qué se llama ${MARCA}?`,
+    a: "Legatum significa «legado» en latín: lo que una generación deja a la siguiente.",
   },
 ];
 

@@ -1,9 +1,10 @@
+import { MARCA } from "@/lib/marca";
 import type { Metadata } from "next";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Privacidad — Agnis",
+  title: `Privacidad — ${MARCA}`,
 };
 
 const PUNTOS = [

@@ -54,7 +54,7 @@ export const RELACIONES = [
   "Otra",
 ];
 
-const KEY = "agnis.registro.v1";
+const KEY = "legatum.registro.v1";
 
 export function guardarRegistro(r: Registro) {
   try {

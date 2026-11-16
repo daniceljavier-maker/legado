@@ -108,7 +108,7 @@ export function Wizard() {
             {paso === 0 && (
               <Paso
                 titulo="¿Para quién es este legado?"
-                sub="Puedes empezar el tuyo o encender el de alguien de tu familia."
+                sub="Puedes empezar el tuyo o empezar el de alguien de tu familia."
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Opcion
@@ -302,7 +302,7 @@ export function Wizard() {
 
             {paso === 4 && (
               <Paso
-                titulo="Antes de encender el fuego."
+                titulo="Antes de empezar."
                 sub="Dos cosas que necesitamos que sepas y aceptes."
               >
                 <div className="rounded-2xl bg-paper border border-bark/10 p-5 md:p-6 mb-5">

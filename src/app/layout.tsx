@@ -1,3 +1,4 @@
+import { MARCA } from "@/lib/marca";
 import type { Metadata } from "next";
 import { Inter_Tight } from "next/font/google";
 import "./globals.css";
@@ -10,9 +11,9 @@ const grotesk = Inter_Tight({
 });
 
 export const metadata: Metadata = {
-  title: "Agnis — El fuego que una familia se pasa de mano en mano",
+  title: `${MARCA} — Lo que una familia se pasa de mano en mano`,
   description:
-    "Agnis ayuda a una persona a contar su vida en conversaciones por voz, para que su familia pueda preguntarle en el futuro.",
+    `${MARCA} ayuda a una persona a contar su vida en conversaciones por voz, para que su familia pueda preguntarle en el futuro.`,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

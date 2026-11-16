@@ -1,3 +1,4 @@
+import { MARCA } from "@/lib/marca";
 import Link from "next/link";
 
 export function Footer() {
@@ -5,12 +6,11 @@ export function Footer() {
     <footer className="bg-tan text-bark overflow-hidden">
       <div className="px-6 lg:px-8 pt-14 md:pt-16 grid grid-cols-2 md:grid-cols-12 gap-8 text-sm">
         <div className="col-span-2 md:col-span-4">
-          <p className="text-bark/60 mb-2">Contacto</p>
-          <a href="mailto:hola@agnis.app" className="hover:text-ember transition-colors">hola@agnis.app</a>
-          <p className="mt-1">España y México</p>
+          <p className="text-bark/60 mb-2">Beta cerrada</p>
+          <p>España y México</p>
         </div>
         <nav aria-label="Pie de página" className="md:col-span-3 flex flex-col gap-1">
-          <p className="text-bark/60 mb-1">Agnis</p>
+          <p className="text-bark/60 mb-1">{MARCA}</p>
           <Link href="/#como-funciona" className="hover:text-ember transition-colors">Cómo funciona</Link>
           <Link href="/#dos-lados" className="hover:text-ember transition-colors">Para quién</Link>
           <Link href="/#preguntas" className="hover:text-ember transition-colors">Preguntas</Link>
@@ -28,7 +28,7 @@ export function Footer() {
         de mano en mano
       </p>
       <div className="px-6 lg:px-8 py-5 flex flex-wrap justify-between gap-2 text-xs text-bark/70">
-        <span>© 2026 Agnis. Nombre provisional.</span>
+        <span>© 2026 {MARCA}</span>
         <span>Las fotos muestran personas inventadas.</span>
       </div>
     </footer>

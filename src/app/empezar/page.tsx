@@ -1,10 +1,11 @@
+import { MARCA } from "@/lib/marca";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Wordmark } from "@/components/Brand";
 import { Wizard } from "@/components/Wizard";
 
 export const metadata: Metadata = {
-  title: "Empezar un legado — Agnis",
+  title: `Empezar un legado — ${MARCA}`,
 };
 
 export default function EmpezarPage() {

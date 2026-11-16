@@ -1,7 +1,7 @@
-# Agnis · Pieza 1: web de registro (Alfa de Legado)
+# Legatum · Pieza 1: web de registro (Alfa de Legado)
 
 Estado: prototipo v0.1 · 15 nov 2026 · Dan + Claude. Pendiente de revisión de Lorena.
-"Agnis" es nombre provisional (LG-015).
+El nombre vive en `src/lib/marca.ts`.
 
 ## Qué hay
 - `/` landing: hero con brasas (canvas, sin vídeo), cómo funciona, dos lados, promesas, Julián, FAQ, CTA.

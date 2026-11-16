@@ -26,7 +26,7 @@ export function Invitacion() {
       <section className="relative max-w-xl mx-auto px-6 pt-16 md:pt-24 pb-24 flex flex-col items-center text-center">
         <FlameMark className="w-14 h-14 text-ember animate-breathe" />
         <p className="mt-8 text-base md:text-lg text-smoke animate-fade-up stagger-2">
-          {de ? `${de}${relacion ? `, tu ${relacion}` : ""}, te ha preparado algo.` : "Alguien que te quiere te ha preparado algo."}
+          {de ? `${de} te ha preparado algo.` : "Alguien que te quiere te ha preparado algo."}
         </p>
         <h1 className="mt-4 font-display text-[44px] md:text-6xl leading-[1.02] tracking-tight animate-fade-up stagger-3">
           Hola, {quien}.

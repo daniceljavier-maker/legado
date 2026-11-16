@@ -1,10 +1,11 @@
+import { MARCA } from "@/lib/marca";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Reveal } from "@/components/Reveal";
 import { Faq } from "@/components/Faq";
 
-/* Fotos generadas para Agnis: personas inventadas, no son clientes reales. */
+/* Fotos generadas para la marca: personas inventadas, no son clientes reales. */
 const FOTOS = {
   baile: { src: "/img/baile.webp", alt: "Mujer mayor bailando con una falda coral" },
   guitarra: { src: "/img/guitarra.webp", alt: "Hombre mayor levantando una guitarra" },
@@ -56,7 +57,7 @@ export default function Home() {
               Guardamos lo que tu familia sabe, para que pase de una generación a la siguiente
             </h1>
             <p className="mt-6 text-base text-smoke max-w-sm leading-relaxed animate-fade-up stagger-3">
-              Agnis conversa por voz con quien más quieres y guarda sus historias, sus criterios y sus consejos. Mañana, los tuyos podrán preguntarle.
+              {MARCA} conversa por voz con quien más quieres y guarda sus historias, sus criterios y sus consejos. Mañana, los tuyos podrán preguntarle.
             </p>
             <div className="mt-8 flex flex-wrap gap-2 animate-fade-up stagger-4">
               <Link href="/empezar" className={btnDark}>Empezar un legado</Link>
@@ -93,8 +94,8 @@ export default function Home() {
         {/* DOS LADOS */}
         <section id="dos-lados" className="grid md:grid-cols-2 scroll-mt-20">
           {[
-            { k: "cuento" as const, bg: "bg-sand", tag: "Para quien cuenta", t: "Hablar, no escribir", d: "Julián, el entrevistador de Agnis, pregunta por voz en conversaciones cortas. Quien cuenta decide de qué habla, cuánto rato y qué se queda en privado.", cta: "Ver su invitación", href: "/invitacion" },
-            { k: "album" as const, bg: "bg-tan", tag: "Para quien escucha", t: "Preguntar, cuando haga falta", d: "La familia pregunta por escrito y Agnis responde solo con lo que esa persona contó, diciendo de qué conversación sale. Sin grabaciones y sin imitar su voz.", cta: "Empezar un legado", href: "/empezar" },
+            { k: "cuento" as const, bg: "bg-sand", tag: "Para quien cuenta", t: "Hablar, no escribir", d: `Julián, el entrevistador de ${MARCA}, pregunta por voz en conversaciones cortas. Quien cuenta decide de qué habla, cuánto rato y qué se queda en privado.`, cta: "Ver su invitación", href: "/invitacion" },
+            { k: "album" as const, bg: "bg-tan", tag: "Para quien escucha", t: "Preguntar, cuando haga falta", d: `La familia pregunta por escrito y ${MARCA} responde solo con lo que esa persona contó, diciendo de qué conversación sale. Sin grabaciones y sin imitar su voz.`, cta: "Empezar un legado", href: "/empezar" },
           ].map((c, i) => (
             <Reveal key={c.t} delay={i * 0.1} className={`${c.bg} flex flex-col`}>
               <div className="px-6 lg:px-8 pt-10 md:pt-14">
@@ -139,7 +140,7 @@ export default function Home() {
         <section className="pb-24 md:pb-36 overflow-hidden">
           <Reveal className="px-6 lg:px-8">
             <p className="font-display text-center text-3xl sm:text-5xl lg:text-6xl leading-[1.02] max-w-5xl mx-auto mb-12 md:mb-16">
-              Una vida entera no cabe en una tarde. Por eso Agnis vuelve cada semana, sin prisa.
+              Una vida entera no cabe en una tarde. Por eso {MARCA} vuelve cada semana, sin prisa.
             </p>
           </Reveal>
           <div className="flex w-max marquee" aria-hidden="true">
@@ -160,8 +161,8 @@ export default function Home() {
             {[
               { t: "Registras a quien va a contar", d: "Tú mismo o un familiar. Nos dices cómo le gusta que le llamen, dónde vive y qué te gustaría que no se perdiera." },
               { t: "Julián se presenta y conversa", d: "Por voz, con el acento de su tierra, en sesiones cortas y más o menos semanales. Pregunta una cosa cada vez y retoma donde lo dejaron." },
-              { t: "Agnis ordena sin inventar", d: "Recuerdos, personas, consejos y lugares quedan guardados con la conversación de la que salen. Lo delicado, en privado." },
-              { t: "La familia pregunta", d: "Hoy o dentro de muchos años. Si esa persona no lo contó, Agnis lo dice y no rellena huecos." },
+              { t: `${MARCA} ordena sin inventar`, d: "Recuerdos, personas, consejos y lugares quedan guardados con la conversación de la que salen. Lo delicado, en privado." },
+              { t: "La familia pregunta", d: `Hoy o dentro de muchos años. Si esa persona no lo contó, ${MARCA} lo dice y no rellena huecos.` },
             ].map((s, i) => (
               <Reveal as="li" key={s.t} delay={i * 0.05} className="group grid md:grid-cols-12 gap-2 md:gap-6 py-6 md:py-7 border-b border-bark/15 transition-colors hover:bg-paper md:px-3">
                 <span className="md:col-span-1 text-sm text-smoke">0{i + 1}</span>

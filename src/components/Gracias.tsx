@@ -29,8 +29,8 @@ export function Gracias() {
           {r === null
             ? "No encontramos un registro en este navegador."
             : esYo
-              ? "Tu fuego ya está encendido."
-              : `El fuego de ${quien} ya está encendido.`}
+              ? "Tu legado ya ha empezado."
+              : `El legado de ${quien} ya ha empezado.`}
         </h1>
 
         {r === null ? (
