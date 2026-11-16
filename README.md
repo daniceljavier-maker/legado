@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Agnis · Pieza 1: web de registro (Alfa de Legado)
 
-## Getting Started
+Estado: prototipo v0.1 · 15 nov 2026 · Dan + Claude. Pendiente de revisión de Lorena.
+"Agnis" es nombre provisional (LG-015).
 
-First, run the development server:
+## Qué hay
+- `/` landing: hero con brasas (canvas, sin vídeo), cómo funciona, dos lados, promesas, Julián, FAQ, CTA.
+- `/empezar` registro en 5 pasos: para quién · quien narra (nombre, apodo, país → voz de Julián) · tú · qué contar (caja 11, preguntas de la familia) · consentimiento y envío.
+- `/gracias` confirmación y próximos pasos.
+- `/invitacion` lo que verá quien narra (texto grande, un botón). El botón se conecta a la pieza 2.
+- `/privacidad` borrador con las reglas de producto; texto legal pendiente (LG-005).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Stack
+Next.js 16 (App Router, export estático) · Tailwind 4 · motion · Fraunces + Figtree.
+`npm install && npm run dev` · `npm run build` genera `out/`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Decisiones de diseño
+- Paleta: crema #F6F1E8, corteza #2A2622, musgo #3E5A3F, brasa #A8482A (texto, AA), dorado #E9B868 (solo decorativo).
+- Tamaños de texto y botones generosos; foco visible; respeta prefers-reduced-motion.
+- Sin dark patterns, sin precios (no aprobados), sin cifras inventadas.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Pendiente
+- Persistencia real (hoy localStorage) → Supabase, cuando haya acceso (LG-020).
+- Envío de correo/invitación real.
+- Textos legales definitivos (LG-005).
+- Conectar `/invitacion` con la app del narrador (pieza 2).
