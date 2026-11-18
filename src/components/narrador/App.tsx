@@ -19,6 +19,7 @@ import {
   type Tema,
 } from "@/lib/narrador";
 import { texto, type Pais } from "@/lib/guion";
+import { olvidarVinculo, subirAjustes, subirPrivacidad, subirSesion } from "@/lib/nube";
 import { Oido, callar, decir, ecoAlAzar, secuencia } from "./Julian";
 
 /* ---------- piezas comunes ---------- */
@@ -112,7 +113,9 @@ export function NarradorApp() {
             onPais={(pais) => actualizar({ pais })}
             onNombre={(nombre) => actualizar({ nombre })}
             onListo={() => {
+              const listo = { ...e, consentido: true };
               actualizar({ consentido: true });
+              void subirAjustes(listo);
               setPantalla("inicio");
             }}
           />
@@ -135,6 +138,7 @@ export function NarradorApp() {
             onTerminar={(segundos, reservado) => {
               const sesion = { temaId: temaActual.id, inicio: new Date().toISOString(), segundos, reservado };
               actualizar({ sesiones: [...e.sesiones, sesion] });
+              void subirSesion(e, sesion);
               setUltima({ tema: temaActual, segundos, reservado });
               setPantalla("cierre");
             }}
@@ -152,15 +156,24 @@ export function NarradorApp() {
         {pantalla === "recuerdos" && (
           <Recuerdos
             e={e}
-            onPrivacidad={(id, p) => actualizar({ privacidad: { ...e.privacidad, [id]: p } })}
+            onPrivacidad={(id, p) => {
+              actualizar({ privacidad: { ...e.privacidad, [id]: p } });
+              void subirPrivacidad(e, id, p);
+            }}
             onVolver={() => setPantalla("inicio")}
           />
         )}
         {pantalla === "ajustes" && (
           <Ajustes
             e={e}
-            onPais={(pais) => actualizar({ pais })}
-            onLetra={(letra) => actualizar({ letra })}
+            onPais={(pais) => {
+              actualizar({ pais });
+              void subirAjustes({ ...e, pais });
+            }}
+            onLetra={(letra) => {
+              actualizar({ letra });
+              void subirAjustes({ ...e, letra });
+            }}
             onPausa={(pausado) => actualizar({ pausado })}
             onVolver={() => setPantalla("inicio")}
           />
@@ -791,6 +804,7 @@ function Ajustes({
         onClick={() => {
           if (confirm("Esto borra lo guardado en este teléfono. ¿Seguimos?")) {
             guardarEstado(ESTADO_VACIO);
+            olvidarVinculo();
             location.reload();
           }
         }}
