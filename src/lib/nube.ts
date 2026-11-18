@@ -119,3 +119,73 @@ export function olvidarVinculo() {
     // Nada que hacer.
   }
 }
+
+/* ---------- acceso por enlace y recuerdos importados ---------- */
+
+export type Importada = {
+  id: string;
+  numero: number | null;
+  fecha: string;
+  caracteres: number;
+};
+
+/** Datos del narrador que vienen de la nube al entrar por enlace. */
+export type NarradorNube = { id: string; nombre: string | null; pais: "mx" | "es" | null };
+
+/**
+ * Cambia el enlace único (?acceso=…) por una sesión de verdad.
+ * A partir de aquí manda el RLS de la base, no la app.
+ */
+export async function entrarConEnlace(token: string): Promise<NarradorNube | null> {
+  if (!supabase) return null;
+  try {
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/entrar-con-enlace`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+      },
+      body: JSON.stringify({ token }),
+    });
+    if (!res.ok) return null;
+
+    const datos = await res.json();
+    if (!datos?.token_hash) return null;
+
+    const { error } = await supabase.auth.verifyOtp({
+      type: "magiclink",
+      token_hash: datos.token_hash,
+    });
+    if (error) return null;
+
+    if (datos.narrador?.id) guardarIdLocal(datos.narrador.id);
+    return datos.narrador ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Las conversaciones que ya existían antes de esta app. */
+export async function leerImportadas(): Promise<Importada[]> {
+  if (!supabase || !(await hayCuenta())) return [];
+  const { data, error } = await supabase
+    .from("sesiones")
+    .select("id, numero, inicio, transcripcion")
+    .eq("tema_id", "importado")
+    .order("numero", { ascending: true });
+
+  if (error || !data) return [];
+  return data.map((s) => ({
+    id: s.id as string,
+    numero: (s.numero as number | null) ?? null,
+    fecha: s.inicio as string,
+    caracteres: ((s.transcripcion as string | null) ?? "").length,
+  }));
+}
+
+/** Cierra la sesión en la nube (el teléfono conserva lo suyo). */
+export async function salir() {
+  await supabase?.auth.signOut();
+  olvidarVinculo();
+}

@@ -19,7 +19,15 @@ import {
   type Tema,
 } from "@/lib/narrador";
 import { texto, type Pais } from "@/lib/guion";
-import { olvidarVinculo, subirAjustes, subirPrivacidad, subirSesion } from "@/lib/nube";
+import {
+  entrarConEnlace,
+  leerImportadas,
+  olvidarVinculo,
+  subirAjustes,
+  subirPrivacidad,
+  subirSesion,
+  type Importada,
+} from "@/lib/nube";
 import { Oido, callar, decir, ecoAlAzar, secuencia } from "./Julian";
 
 /* ---------- piezas comunes ---------- */
@@ -69,6 +77,7 @@ export function NarradorApp() {
   const [pantalla, setPantalla] = useState<Pantalla>("inicio");
   const [temaActual, setTemaActual] = useState<Tema | null>(null);
   const [ultima, setUltima] = useState<{ tema: Tema; segundos: number; reservado: number } | null>(null);
+  const [importadas, setImportadas] = useState<Importada[]>([]);
 
   useEffect(() => {
     const est = leerEstado();
@@ -81,6 +90,28 @@ export function NarradorApp() {
     const inicial = { ...est, nombre, pais };
     setE(inicial);
     setPantalla(inicial.consentido ? "inicio" : "bienvenida");
+
+    // ¿Llega por su enlace único? Entonces entra sin teclear nada.
+    const token = new URLSearchParams(location.search).get("acceso");
+    void (async () => {
+      if (token) {
+        const nube = await entrarConEnlace(token);
+        if (nube) {
+          const traido = {
+            ...inicial,
+            nombre: nube.nombre || inicial.nombre,
+            pais: (nube.pais ?? inicial.pais) as Pais,
+            consentido: true,
+          };
+          guardarEstado(traido);
+          setE(traido);
+          setPantalla("inicio");
+          // Quita el token de la barra de direcciones: es una llave.
+          history.replaceState(null, "", location.pathname);
+        }
+      }
+      setImportadas(await leerImportadas());
+    })();
   }, []);
 
   const actualizar = useCallback((cambio: Partial<EstadoNarrador>) => {
@@ -156,6 +187,7 @@ export function NarradorApp() {
         {pantalla === "recuerdos" && (
           <Recuerdos
             e={e}
+            importadas={importadas}
             onPrivacidad={(id, p) => {
               actualizar({ privacidad: { ...e.privacidad, [id]: p } });
               void subirPrivacidad(e, id, p);
@@ -657,14 +689,19 @@ function Cierre({
 
 function Recuerdos({
   e,
+  importadas,
   onPrivacidad,
   onVolver,
 }: {
   e: EstadoNarrador;
+  importadas: Importada[];
   onPrivacidad: (id: string, p: Privacidad) => void;
   onVolver: () => void;
 }) {
   const cuenta = (id: string) => e.sesiones.filter((s) => s.temaId === id).length;
+  const fecha = (iso: string) =>
+    new Date(iso).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
+  const privImportado: Privacidad = e.privacidad.importado ?? "solo-yo";
 
   return (
     <>
@@ -673,6 +710,35 @@ function Recuerdos({
         <h1 className="font-display text-[2.5rem] leading-[1.1]">Mis recuerdos</h1>
         <p className="text-xl text-smoke leading-snug">Elige qué temas puede consultar tu familia.</p>
       </div>
+      {importadas.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className={card}>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-2xl font-semibold">Lo que ya contaste</span>
+              <span className="text-lg text-smoke">
+                {importadas.length === 1
+                  ? "1 conversación de antes"
+                  : `${importadas.length} conversaciones de antes`}
+              </span>
+            </div>
+            <ul className="flex flex-col gap-1">
+              {importadas.map((s, i) => (
+                <li key={s.id} className="text-lg text-smoke">
+                  {s.numero ? `Conversación ${s.numero}` : `Conversación ${i + 1}`} · {fecha(s.fecha)}
+                </li>
+              ))}
+            </ul>
+            <div className="flex gap-2" role="group" aria-label="Quién puede consultar lo que ya contaste">
+              <Opcion activa={privImportado === "familia"} onClick={() => onPrivacidad("importado", "familia")}>
+                Familia
+              </Opcion>
+              <Opcion activa={privImportado === "solo-yo"} onClick={() => onPrivacidad("importado", "solo-yo")}>
+                Solo yo
+              </Opcion>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col gap-3">
         {TEMAS.map((t) => {
           const n = cuenta(t.id);
