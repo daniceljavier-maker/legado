@@ -220,8 +220,8 @@ export function Wizard() {
                         : "¿Qué tipo de conversación le anima más?"}{" "}
                       <span className="font-normal text-smoke">(opcional)</span>
                       <span className="block text-sm font-normal text-smoke mt-1">
-                        Elige hasta {MAX_ESTILOS}. Julián empezará así y se irá
-                        ajustando en cada conversación.
+                        Puedes marcar varias, hasta {MAX_ESTILOS}. Julián empezará así
+                        y se irá ajustando en cada conversación.
                       </span>
                     </legend>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -251,11 +251,34 @@ export function Wizard() {
                                 : "border-bark/15 bg-paper hover:border-bark/40"
                             }`}
                           >
-                            <span className="block font-display text-lg md:text-xl leading-tight">
-                              {e.titulo}
-                            </span>
-                            <span className="block mt-1 text-sm text-smoke leading-relaxed">
-                              {e.detalle}
+                            <span className="flex items-start gap-3">
+                              {/* Casilla cuadrada: es de seleccion multiple, a diferencia de los circulos. */}
+                              <span
+                                className={`mt-0.5 w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center ${
+                                  on ? "border-ember bg-ember" : "border-bark/30"
+                                }`}
+                                aria-hidden="true"
+                              >
+                                {on && (
+                                  <svg viewBox="0 0 12 12" className="w-3 h-3 text-paper" fill="none">
+                                    <path
+                                      d="M2.5 6.2 5 8.5l4.5-5"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                )}
+                              </span>
+                              <span>
+                                <span className="block font-display text-lg md:text-xl leading-tight">
+                                  {e.titulo}
+                                </span>
+                                <span className="block mt-1 text-sm text-smoke leading-relaxed">
+                                  {e.detalle}
+                                </span>
+                              </span>
                             </span>
                           </button>
                         );
