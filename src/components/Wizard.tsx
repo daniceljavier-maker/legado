@@ -4,6 +4,9 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
+  ESTILOS,
+  MAX_ESTILOS,
+  RANGOS_EDAD,
   REGISTRO_VACIO,
   RELACIONES,
   TEMAS,
@@ -31,7 +34,11 @@ export function Wizard() {
       case 0:
         return r.paraQuien !== null;
       case 1:
-        return r.narrador.nombre.trim().length > 1 && r.narrador.pais !== null;
+        return (
+          r.narrador.nombre.trim().length > 1 &&
+          r.narrador.pais !== null &&
+          r.narrador.rangoEdad !== null
+        );
       case 2:
         return (
           r.solicitante.nombre.trim().length > 1 &&
@@ -180,6 +187,80 @@ export function Wizard() {
                     {intento && !r.narrador.pais && (
                       <p className="mt-2 text-sm text-ember">Elige un país.</p>
                     )}
+                  </fieldset>
+                  <fieldset>
+                    <legend className="text-sm font-medium text-bark mb-3">
+                      {esYo ? "¿Qué edad tienes?" : "¿Qué edad tiene?"}
+                      <span className="block text-sm font-normal text-smoke mt-1">
+                        Para que Julián lleve el ritmo adecuado desde la primera
+                        conversación.
+                      </span>
+                    </legend>
+                    <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
+                      {RANGOS_EDAD.map(([id, label]) => (
+                        <Opcion
+                          key={id}
+                          compacta
+                          activa={r.narrador.rangoEdad === id}
+                          onClick={() =>
+                            setR({ ...r, narrador: { ...r.narrador, rangoEdad: id } })
+                          }
+                          titulo={label}
+                        />
+                      ))}
+                    </div>
+                    {intento && !r.narrador.rangoEdad && (
+                      <p className="mt-2 text-sm text-ember">Elige un rango de edad.</p>
+                    )}
+                  </fieldset>
+                  <fieldset>
+                    <legend className="text-sm font-medium text-bark mb-3">
+                      {esYo
+                        ? "¿Qué tipo de conversación te anima más?"
+                        : "¿Qué tipo de conversación le anima más?"}{" "}
+                      <span className="font-normal text-smoke">(opcional)</span>
+                      <span className="block text-sm font-normal text-smoke mt-1">
+                        Elige hasta {MAX_ESTILOS}. Julián empezará así y se irá
+                        ajustando en cada conversación.
+                      </span>
+                    </legend>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {ESTILOS.map((e) => {
+                        const on = r.narrador.estilos.includes(e.id);
+                        const lleno = !on && r.narrador.estilos.length >= MAX_ESTILOS;
+                        return (
+                          <button
+                            type="button"
+                            key={e.id}
+                            aria-pressed={on}
+                            disabled={lleno}
+                            onClick={() =>
+                              setR({
+                                ...r,
+                                narrador: {
+                                  ...r.narrador,
+                                  estilos: on
+                                    ? r.narrador.estilos.filter((x) => x !== e.id)
+                                    : [...r.narrador.estilos, e.id],
+                                },
+                              })
+                            }
+                            className={`text-left rounded-2xl border p-4 transition-all duration-300 disabled:opacity-40 ${
+                              on
+                                ? "border-ember bg-paper shadow-[0_0_0_4px_rgba(168,72,42,0.12)]"
+                                : "border-bark/15 bg-paper hover:border-bark/40"
+                            }`}
+                          >
+                            <span className="block font-display text-lg md:text-xl leading-tight">
+                              {e.titulo}
+                            </span>
+                            <span className="block mt-1 text-sm text-smoke leading-relaxed">
+                              {e.detalle}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </fieldset>
                 </div>
               </Paso>
@@ -519,9 +600,12 @@ function Check({
 function Resumen({ r }: { r: Registro }) {
   const esYo = r.paraQuien === "yo";
   const pais = r.narrador.pais === "ES" ? "España" : "México";
+  const edad = RANGOS_EDAD.find(([id]) => id === r.narrador.rangoEdad)?.[1];
+  const estilos = ESTILOS.filter((e) => r.narrador.estilos?.includes(e.id)).map((e) => e.titulo);
   return (
     <dl className="grid gap-3 text-base">
-      <Row k={esYo ? "Narras" : "Narra"} v={`${r.narrador.nombre}${r.narrador.apodo ? ` (${r.narrador.apodo})` : ""} · ${pais}`} />
+      <Row k={esYo ? "Narras" : "Narra"} v={`${r.narrador.nombre}${r.narrador.apodo ? ` (${r.narrador.apodo})` : ""} · ${pais}${edad ? ` · ${edad} años` : ""}`} />
+      {estilos.length > 0 && <Row k={esYo ? "Te anima" : "Le anima"} v={estilos.join(" · ")} />}
       <Row k={esYo ? "Correo" : "Invita"} v={esYo ? r.solicitante.email : `${r.solicitante.nombre}, ${r.solicitante.relacion.toLowerCase()} · ${r.solicitante.email}`} />
       <Row k="Temas" v={r.temas.length ? r.temas.join(" · ") : "Lo decidirá la conversación"} />
       {r.preguntas.trim() && <Row k="Pregunta" v={r.preguntas.trim()} />}

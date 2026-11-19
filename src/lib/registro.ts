@@ -4,12 +4,42 @@
  */
 export type Pais = "ES" | "MX";
 
+/** Mismos valores que fase1.narradores.rango_edad. */
+export type RangoEdad = "menos-50" | "50-59" | "60-69" | "70-79" | "80-mas";
+
+/** Mismos valores que fase1.narradores.estilos_conversacion (hasta dos). */
+export type Estilo = "humor" | "reflexiva" | "detalle" | "calma" | "conversadora";
+
+export const RANGOS_EDAD: [RangoEdad, string][] = [
+  ["menos-50", "Menos de 50"],
+  ["50-59", "50 a 59"],
+  ["60-69", "60 a 69"],
+  ["70-79", "70 a 79"],
+  ["80-mas", "80 o más"],
+];
+
+/**
+ * Punto de partida del trato de Julián. Los briefings lo ajustan
+ * después con lo que se observa en cada sesión.
+ */
+export const ESTILOS: { id: Estilo; titulo: string; detalle: string }[] = [
+  { id: "humor", titulo: "Anécdotas y risas", detalle: "Se anima contando historias con humor." },
+  { id: "reflexiva", titulo: "Pensar y reflexionar", detalle: "Le gusta hablar de lo que aprendió y de por qué decidió lo que decidió." },
+  { id: "detalle", titulo: "Con detalle", detalle: "Disfruta recordando lugares, nombres y cómo eran las cosas." },
+  { id: "calma", titulo: "Con calma", detalle: "Prefiere preguntas sencillas y sin prisa." },
+  { id: "conversadora", titulo: "Le encanta hablar", detalle: "Se anima sola: basta con darle pie." },
+];
+
+export const MAX_ESTILOS = 2;
+
 export type Registro = {
   paraQuien: "yo" | "familiar" | null;
   narrador: {
     nombre: string;
     apodo: string;
     pais: Pais | null;
+    rangoEdad: RangoEdad | null;
+    estilos: Estilo[];
   };
   solicitante: {
     nombre: string;
@@ -27,7 +57,7 @@ export type Registro = {
 
 export const REGISTRO_VACIO: Registro = {
   paraQuien: null,
-  narrador: { nombre: "", apodo: "", pais: null },
+  narrador: { nombre: "", apodo: "", pais: null, rangoEdad: null, estilos: [] },
   solicitante: { nombre: "", email: "", relacion: "" },
   temas: [],
   preguntas: "",
