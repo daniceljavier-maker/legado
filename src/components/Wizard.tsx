@@ -15,7 +15,7 @@ import {
   type Pais,
   type Registro,
 } from "@/lib/registro";
-import { FlameMark } from "./Brand";
+import { Pestanas, Pildora, Resto, Tarjeta, type Pestana } from "./registro/Mazo";
 
 const PASOS = ["Para quién", "Quien narra", "Tú", "Qué contar", "Enviar"] as const;
 
@@ -28,6 +28,36 @@ export function Wizard() {
   const [intento, setIntento] = useState(false);
 
   const esYo = r.paraQuien === "yo";
+
+  /** Lo que enseña la pestaña de un paso ya contestado. */
+  const resumen = (i: number): string => {
+    switch (i) {
+      case 0:
+        return r.paraQuien === "yo" ? "Para mí" : "Para alguien de mi familia";
+      case 1: {
+        const pais = r.narrador.pais === "ES" ? "España" : r.narrador.pais === "MX" ? "México" : "";
+        const edad = RANGOS_EDAD.find(([id]) => id === r.narrador.rangoEdad)?.[1] ?? "";
+        return [r.narrador.nombre.trim(), pais, edad].filter(Boolean).join(" · ");
+      }
+      case 2:
+        return [r.solicitante.nombre.trim(), esYo ? "" : r.solicitante.relacion]
+          .filter(Boolean)
+          .join(" · ");
+      case 3:
+        return r.temas.length === 0
+          ? "Que Julián elija"
+          : r.temas.length === 1
+            ? "1 tema elegido"
+            : `${r.temas.length} temas elegidos`;
+      default:
+        return "";
+    }
+  };
+
+  const hechas: Pestana[] = PASOS.slice(0, paso).map((titulo, i) => ({
+    titulo,
+    respuesta: resumen(i),
+  }));
 
   const valido = useMemo(() => {
     switch (paso) {
@@ -81,30 +111,14 @@ export function Wizard() {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Progreso */}
-      <ol className="flex items-center gap-2 mb-10" aria-label="Progreso">
-        {PASOS.map((p, i) => (
-          <li key={p} className="flex-1 flex flex-col gap-2">
-            <span
-              className={`h-1 rounded-full transition-colors duration-500 ${
-                i <= paso ? "bg-ember" : "bg-bark/10"
-              }`}
-            />
-            <span
-              className={`text-xs tracking-wide uppercase ${
-                i === paso ? "text-bark" : "text-smoke/70"
-              } hidden sm:block`}
-            >
-              {p}
-            </span>
-          </li>
-        ))}
-      </ol>
+      {/* Lo ya contestado, como carpetas apiladas */}
+      <Pestanas hechas={hechas} actual={paso} onIr={ir} />
 
-      <div className="relative min-h-[420px]">
+      <Tarjeta>
         <AnimatePresence mode="wait" custom={dir} initial={false}>
           <motion.div
             key={paso}
+            className="min-h-[340px]"
             custom={dir}
             variants={variants}
             initial="enter"
@@ -447,36 +461,27 @@ export function Wizard() {
             )}
           </motion.div>
         </AnimatePresence>
-      </div>
 
-      {/* Navegación */}
-      <div className="mt-10 flex items-center justify-between gap-4">
-        <button
-          type="button"
-          onClick={() => ir(Math.max(0, paso - 1))}
-          disabled={paso === 0}
-          className="px-5 py-3 text-base text-bark disabled:opacity-30 hover:opacity-70 transition-opacity"
-        >
-          Atrás
-        </button>
-        <button
-          type="button"
-          onClick={siguiente}
-          className={`inline-flex items-center gap-2 px-7 py-4 rounded-full text-base transition-colors ${
-            valido ? "bg-bark text-paper hover:bg-moss" : "bg-bark/40 text-paper"
-          }`}
-          aria-disabled={!valido}
-        >
-          {paso === PASOS.length - 1 ? (
-            <>
-              <FlameMark className="w-5 h-5 text-gold" />
-              {esYo ? "Empezar mi legado" : "Enviar la invitación"}
-            </>
-          ) : (
-            "Continuar"
-          )}
-        </button>
-      </div>
+        <div className="mt-10 flex items-center justify-between gap-4">
+          <Pildora tono="claro" onClick={() => ir(Math.max(0, paso - 1))} disabled={paso === 0}>
+            Atrás
+          </Pildora>
+          <Pildora onClick={siguiente} aria-disabled={!valido}>
+            {paso === PASOS.length - 1
+              ? esYo
+                ? "Empezar mi legado"
+                : "Enviar la invitación"
+              : "Continuar"}
+          </Pildora>
+        </div>
+      </Tarjeta>
+
+      {/* Las tarjetas que faltan, asomando por debajo */}
+      <Resto cuantas={PASOS.length - 1 - paso} />
+
+      <p className="mt-7 text-center text-xs text-smoke">
+        Paso {paso + 1} de {PASOS.length}
+      </p>
     </div>
   );
 }

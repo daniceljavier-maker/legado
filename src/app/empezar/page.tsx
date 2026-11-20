@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Wordmark } from "@/components/Brand";
 import { Wizard } from "@/components/Wizard";
+import { Luz } from "@/components/registro/Mazo";
 
 export const metadata: Metadata = {
   title: `Empezar un legado — ${MARCA}`,
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 export default function EmpezarPage() {
   return (
     <main className="flex-1 flex flex-col">
+      <Luz />
       <header className="max-w-7xl w-full mx-auto px-6 lg:px-8 h-16 md:h-20 flex items-center justify-between">
         <Wordmark />
         <Link href="/" className="text-sm text-bark hover:opacity-70">
