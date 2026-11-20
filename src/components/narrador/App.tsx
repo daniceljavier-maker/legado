@@ -65,7 +65,7 @@ function Volver({ onClick }: { onClick: () => void }) {
 }
 
 const btnDark =
-  "w-full min-h-[4.5rem] rounded-xl bg-bark text-cream text-2xl font-semibold flex items-center justify-center px-6 transition-transform active:scale-[0.98] disabled:opacity-40";
+  "w-full min-h-[4.5rem] rounded-xl bg-ember text-paper text-2xl font-semibold flex items-center justify-center px-6 transition-transform active:scale-[0.98] disabled:opacity-40";
 const btnLight =
   "w-full min-h-16 rounded-xl border-2 border-bark text-bark text-[1.35rem] font-semibold flex items-center justify-center px-6 transition-transform active:scale-[0.98]";
 const card = "bg-paper rounded-2xl p-5 flex flex-col gap-3";

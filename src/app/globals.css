@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
 /*
-  Legatum · tokens de diseño v0.1
-  v0.2: base neutra greige y grotesca apretada; el color lo ponen las fotos.
-  Texto: corteza, musgo y brasa pasan AA sobre crema (≥ 4,5:1).
-  Dorado y brasa clara son solo decorativos.
+  Legado · tokens de diseño v0.3
+  Suelo blanco cálido, tinta casi negra, y dos acentos con oficio:
+  terracota pide (la acción), verde informa (el estado).
+  Fuera el beige de plecas y rellenos: el color lo pone la fotografía.
+  Tinta, humo, terracota y verde profundo pasan AA sobre el suelo.
+  El verde vivo es solo relleno, nunca texto.
 */
 @theme {
-  --color-cream: #f1eee9;
-  --color-paper: #f8f6f2;
-  --color-sand: #e6e1d9;
-  --color-tan: #cdbdab;
-  --color-bark: #333231;
-  --color-smoke: #66615b;
-  --color-moss: #3e5a3f;
-  --color-moss-deep: #2f4530;
-  --color-ember: #a8482a;
-  --color-ember-light: #c9643f;
-  --color-gold: #e9b868;
-  --color-glow: #f3c58a;
+  /* Suelo: blanco cálido. Nada de beige en plecas ni rellenos: el color
+     lo pone la fotografía. */
+  --color-cream: #fdfcfa;
+  --color-paper: #ffffff;
+  --color-sand: #f3f1ed;
+  --color-tan: #e8e5df;
 
-  --font-display: var(--font-grotesk), system-ui, sans-serif;
+  /* Tinta: un negro de verdad, el ancla que faltaba. */
+  --color-bark: #16130f;
+  --color-smoke: #6b6355;
+
+  /* Terracota: la acción. Un botón lleno por pantalla. */
+  --color-ember: #b4482a;
+  --color-ember-light: #c9643f;
+
+  /* Verde: el estado. Lo guardado y lo privado, nunca una acción.
+     El vivo solo como relleno con tinta encima; el profundo cuando
+     el verde tiene que ser texto o icono sobre blanco. */
+  --color-lima: #c8f24e;
+  --color-moss: #46701c;
+  --color-moss-deep: #35540f;
+
+  --font-display: var(--font-serif), Georgia, serif;
   --font-body: var(--font-grotesk), system-ui, sans-serif;
 
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
@@ -46,7 +57,7 @@
   }
 
   ::selection {
-    background: var(--color-glow);
+    background: var(--color-lima);
     color: var(--color-bark);
   }
 
@@ -61,8 +72,8 @@
 @layer components {
   .font-display {
     font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.04em;
+    font-weight: 400;
+    letter-spacing: -0.022em;
   }
 }
 

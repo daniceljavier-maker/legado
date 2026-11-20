@@ -251,7 +251,7 @@ export function Pildora({
       aria-disabled={ariaDisabled}
       className={`group relative inline-flex items-center gap-3 overflow-hidden rounded-full px-7 py-4 text-base transition-colors duration-300 disabled:opacity-30 ${
         oscuro
-          ? "bg-bark text-paper hover:bg-moss"
+          ? "bg-ember text-paper hover:bg-bark"
           : "border border-bark/15 bg-transparent text-bark hover:border-bark/40"
       }`}
     >
@@ -259,7 +259,7 @@ export function Pildora({
       <span
         aria-hidden="true"
         className={`relative z-10 h-1.5 w-1.5 rounded-full transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-1 ${
-          oscuro ? "bg-gold" : "bg-ember"
+          oscuro ? "bg-lima" : "bg-smoke/50"
         }`}
       />
     </button>

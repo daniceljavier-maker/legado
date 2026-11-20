@@ -54,7 +54,7 @@ export function Navbar() {
 
             <Link
               href="/empezar"
-              className="hidden md:inline-flex items-center ml-auto px-5 py-2.5 bg-bark text-cream text-xs tracking-[0.18em] uppercase hover:bg-ember transition-colors animate-fade-down stagger-3"
+              className="hidden md:inline-flex items-center ml-auto px-5 py-2.5 border border-bark/25 text-bark text-xs tracking-[0.18em] uppercase hover:border-bark hover:text-ember transition-colors animate-fade-down stagger-3"
             >
               Empezar
             </Link>
@@ -97,7 +97,7 @@ export function Navbar() {
               {l.label}
             </Link>
           ))}
-          <Link href="/empezar" onClick={close} className="mt-4 inline-flex items-center px-8 py-3.5 bg-bark text-cream text-lg tracking-wide">
+          <Link href="/empezar" onClick={close} className="mt-4 inline-flex items-center px-8 py-3.5 bg-ember text-paper text-lg tracking-wide">
             Empezar un legado
           </Link>
         </div>

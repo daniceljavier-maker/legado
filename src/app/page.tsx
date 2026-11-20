@@ -41,7 +41,7 @@ function Chip({ k }: { k: FotoKey }) {
 }
 
 const btnDark =
-  "inline-flex items-center justify-center h-12 px-7 bg-bark text-cream text-sm font-medium hover:bg-ember transition-colors";
+  "inline-flex items-center justify-center h-12 px-7 bg-ember text-paper text-sm font-medium hover:bg-bark transition-colors";
 const btnLight =
   "inline-flex items-center justify-center h-12 px-7 bg-paper text-bark text-sm font-medium hover:bg-white transition-colors";
 

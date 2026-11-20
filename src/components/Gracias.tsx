@@ -57,7 +57,7 @@ export function Gracias() {
             <div className="mt-12 flex flex-wrap gap-4 animate-fade-up stagger-5">
               <Link
                 href="/invitacion"
-                className="inline-flex items-center px-7 py-4 bg-bark text-paper rounded-full hover:bg-moss transition-colors"
+                className="inline-flex items-center px-7 py-4 bg-ember text-paper rounded-full hover:bg-bark transition-colors"
               >
                 {esYo ? "Ver mi invitación" : `Ver la invitación como la verá ${quien}`}
               </Link>
