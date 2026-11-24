@@ -58,6 +58,7 @@ export async function asegurarNarrador(e: EstadoNarrador): Promise<string | null
     .insert({
       user_id: usuario.user?.id,
       nombre: e.nombre || null,
+      como_llamarle: e.nombre || null,
       pais: e.pais,
       letra: e.letra,
       pausado: e.pausado,
@@ -72,14 +73,32 @@ export async function asegurarNarrador(e: EstadoNarrador): Promise<string | null
   return creado.id;
 }
 
-/** Ajustes del narrador: nombre, acento, letra, pausa. */
+/**
+ * Ajustes del narrador: cómo quiere que le llamen, acento, letra, pausa.
+ * El nombre de la app es «cómo quieres que te llame»: va a como_llamarle
+ * y no pisa el nombre que puso la familia en el registro.
+ */
 export async function subirAjustes(e: EstadoNarrador) {
   const id = await asegurarNarrador(e);
   if (!id || !supabase) return;
   await supabase
     .from("narradores")
-    .update({ nombre: e.nombre || null, pais: e.pais, letra: e.letra, pausado: e.pausado })
+    .update({ como_llamarle: e.nombre || null, pais: e.pais, letra: e.letra, pausado: e.pausado })
     .eq("id", id);
+}
+
+/**
+ * El narrador acepta en su bienvenida. Si lo registró un familiar, este es
+ * su consentimiento propio; el del familiar queda aparte (LG-005).
+ */
+export async function aceptarConsentimiento() {
+  const id = idLocal();
+  if (!id || !supabase || !(await hayCuenta())) return;
+  await supabase
+    .from("narradores")
+    .update({ consentido_en: new Date().toISOString(), consentimiento_version: "borrador-0" })
+    .eq("id", id)
+    .is("consentido_en", null);
 }
 
 /**
@@ -130,7 +149,13 @@ export type Importada = {
 };
 
 /** Datos del narrador que vienen de la nube al entrar por enlace. */
-export type NarradorNube = { id: string; nombre: string | null; pais: "mx" | "es" | null };
+export type NarradorNube = {
+  id: string;
+  nombre: string | null;
+  pais: "mx" | "es" | null;
+  /** False si lo registró un familiar y aún no ha aceptado en su bienvenida. */
+  consentido: boolean;
+};
 
 /**
  * Cambia el enlace único (?acceso=…) por una sesión de verdad.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
@@ -10,14 +10,27 @@ import {
   REGISTRO_VACIO,
   RELACIONES,
   TEMAS,
+  enviarRegistro,
+  guardarAlta,
   guardarRegistro,
+  leerCodigo,
   nombreCorto,
+  type MotivoFallo,
   type Pais,
   type Registro,
 } from "@/lib/registro";
 import { Pestanas, Pildora, Resto, Tarjeta, type Pestana } from "./registro/Mazo";
 
 const PASOS = ["Para quién", "Quien narra", "Tú", "Qué contar", "Enviar"] as const;
+
+const FALLOS: Record<MotivoFallo, string> = {
+  codigo: "Ese código de invitación no es válido o ya no tiene plazas. Revísalo o pídenos otro.",
+  demasiados: "Demasiados intentos seguidos desde esta conexión. Espera un rato y vuelve a probar.",
+  correo_repetido: "Ese correo ya tiene un legado en marcha. Si es un error, escríbenos.",
+  datos: "Falta algún dato o no es válido. Revisa los pasos anteriores.",
+  red: "No pudimos enviarlo. Revisa la conexión y vuelve a intentarlo.",
+  servidor: "Algo falló de nuestro lado. Vuelve a intentarlo en un momento.",
+};
 
 export function Wizard() {
   const router = useRouter();
@@ -26,6 +39,12 @@ export function Wizard() {
   const [dir, setDir] = useState(1);
   const [r, setR] = useState<Registro>(REGISTRO_VACIO);
   const [intento, setIntento] = useState(false);
+  const [codigo, setCodigo] = useState("");
+  const [web, setWeb] = useState(""); // trampa para bots: nadie la ve
+  const [enviando, setEnviando] = useState(false);
+  const [fallo, setFallo] = useState("");
+
+  useEffect(() => setCodigo(leerCodigo()), []);
 
   const esYo = r.paraQuien === "yo";
 
@@ -78,7 +97,11 @@ export function Wizard() {
       case 3:
         return true;
       case 4:
-        return r.consentimientos.informado && r.consentimientos.datos;
+        return (
+          r.consentimientos.informado &&
+          r.consentimientos.datos &&
+          codigo.trim().length >= 4
+        );
       default:
         return false;
     }
@@ -90,17 +113,28 @@ export function Wizard() {
     setPaso(n);
   };
 
-  const siguiente = () => {
+  const siguiente = async () => {
+    if (enviando) return;
     if (!valido) {
       setIntento(true);
       return;
     }
-    if (paso < PASOS.length - 1) ir(paso + 1);
-    else {
-      const final = { ...r, creadoEn: new Date().toISOString() };
-      guardarRegistro(final);
-      router.push("/gracias/");
+    if (paso < PASOS.length - 1) {
+      ir(paso + 1);
+      return;
     }
+    setEnviando(true);
+    setFallo("");
+    const final = { ...r, creadoEn: new Date().toISOString() };
+    const res = await enviarRegistro(final, codigo.trim(), web);
+    if (!res.ok) {
+      setFallo(FALLOS[res.motivo]);
+      setEnviando(false);
+      return;
+    }
+    guardarRegistro(final);
+    guardarAlta(res.alta);
+    router.push("/gracias/");
   };
 
   const variants = {
@@ -454,8 +488,36 @@ export function Wizard() {
                     }
                   />
                 </div>
+                <div className="mt-6">
+                  <Campo
+                    id="codigo"
+                    label="Código de invitación"
+                    hint="Viene en el enlace que te pasamos. Por ahora solo pueden entrar personas invitadas."
+                    value={codigo}
+                    onChange={setCodigo}
+                    error={intento && codigo.trim().length < 4 ? "Escribe el código de invitación." : ""}
+                  />
+                </div>
+                {/* Trampa para bots: oculta para personas y lectores de pantalla. */}
+                <div aria-hidden="true" className="absolute -left-[9999px] w-px h-px overflow-hidden">
+                  <label htmlFor="web">Web</label>
+                  <input
+                    id="web"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={web}
+                    onChange={(e) => setWeb(e.target.value)}
+                  />
+                </div>
                 {intento && !valido && (
-                  <p className="mt-4 text-sm text-ember">Marca las dos casillas para continuar.</p>
+                  <p className="mt-4 text-sm text-ember">
+                    Marca las dos casillas y escribe el código para continuar.
+                  </p>
+                )}
+                {fallo && (
+                  <p role="alert" className="mt-4 text-sm text-ember">
+                    {fallo}
+                  </p>
                 )}
               </Paso>
             )}
@@ -463,14 +525,16 @@ export function Wizard() {
         </AnimatePresence>
 
         <div className="mt-10 flex items-center justify-between gap-4">
-          <Pildora tono="claro" onClick={() => ir(Math.max(0, paso - 1))} disabled={paso === 0}>
+          <Pildora tono="claro" onClick={() => ir(Math.max(0, paso - 1))} disabled={paso === 0 || enviando}>
             Atrás
           </Pildora>
-          <Pildora onClick={siguiente} aria-disabled={!valido}>
+          <Pildora onClick={siguiente} aria-disabled={!valido} disabled={enviando}>
             {paso === PASOS.length - 1
-              ? esYo
-                ? "Empezar mi legado"
-                : "Enviar la invitación"
+              ? enviando
+                ? "Enviando…"
+                : esYo
+                  ? "Empezar mi legado"
+                  : "Crear la invitación"
               : "Continuar"}
           </Pildora>
         </div>

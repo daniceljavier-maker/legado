@@ -74,8 +74,8 @@ export function Invitacion() {
         ) : null}
 
         <p className="mt-10 text-sm text-smoke/80 max-w-md">
-          Vista previa. El botón se conectará a la app del narrador (pieza 2) cuando
-          esté lista.
+          Vista previa. {quien} entrará con su propio enlace, el que aparece en la
+          página anterior.
         </p>
       </section>
     </main>

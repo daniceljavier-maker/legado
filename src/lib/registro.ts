@@ -1,6 +1,7 @@
 /**
- * Modelo del registro (pieza 1). Hoy se guarda en el navegador;
- * la persistencia real queda pendiente de LG-020 (Supabase) y LG-005 (legal).
+ * Modelo del registro (pieza 1). Se envía a Supabase (función registrar-alta,
+ * esquema fase1) y se guarda también en el navegador para las páginas de
+ * gracias e invitación. Textos legales pendientes de LG-005.
  */
 export type Pais = "ES" | "MX";
 
@@ -100,6 +101,110 @@ export function leerRegistro(): Registro | null {
     return raw ? (JSON.parse(raw) as Registro) : null;
   } catch {
     return null;
+  }
+}
+
+/* ---------- envío a la base de datos (LG-021) ---------- */
+
+/** Lo que devuelve el alta: el enlace único de quien narra. */
+export type Alta = { narradorId: string; enlace: string; creadoEn: string };
+
+export type MotivoFallo =
+  | "codigo"
+  | "demasiados"
+  | "correo_repetido"
+  | "datos"
+  | "red"
+  | "servidor";
+
+const KEY_ALTA = "legatum.alta.v1";
+const KEY_CODIGO = "legatum.codigo";
+
+export function guardarAlta(a: Alta) {
+  try {
+    localStorage.setItem(KEY_ALTA, JSON.stringify(a));
+  } catch {
+    /* sin almacenamiento disponible */
+  }
+}
+
+export function leerAlta(): Alta | null {
+  try {
+    const raw = localStorage.getItem(KEY_ALTA);
+    return raw ? (JSON.parse(raw) as Alta) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Código de invitación al Alfa. Llega en el enlace (?codigo=…) y se
+ * recuerda en este navegador por si la persona vuelve más tarde.
+ */
+export function leerCodigo(): string {
+  try {
+    const delEnlace = new URLSearchParams(location.search).get("codigo")?.trim();
+    if (delEnlace) {
+      localStorage.setItem(KEY_CODIGO, delEnlace);
+      return delEnlace;
+    }
+    return localStorage.getItem(KEY_CODIGO) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export async function enviarRegistro(
+  r: Registro,
+  codigo: string,
+  web: string,
+): Promise<{ ok: true; alta: Alta } | { ok: false; motivo: MotivoFallo }> {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const clave = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!base || !clave) return { ok: false, motivo: "servidor" };
+
+  try {
+    const res = await fetch(`${base}/functions/v1/registrar-alta`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: clave },
+      body: JSON.stringify({
+        para_quien: r.paraQuien,
+        nombre: r.narrador.nombre,
+        como_llamarle: r.narrador.apodo,
+        pais: r.narrador.pais,
+        rango_edad: r.narrador.rangoEdad,
+        estilos: r.narrador.estilos,
+        solicitante_nombre: r.solicitante.nombre,
+        correo: r.solicitante.email,
+        relacion: r.solicitante.relacion,
+        temas: r.temas,
+        preguntas: r.preguntas,
+        consentimientos: r.consentimientos,
+        codigo,
+        web,
+      }),
+    });
+    const datos = await res.json().catch(() => null);
+    if (res.ok && datos?.enlace && datos?.narrador_id) {
+      return {
+        ok: true,
+        alta: {
+          narradorId: datos.narrador_id,
+          enlace: `${location.origin}${datos.enlace}`,
+          creadoEn: new Date().toISOString(),
+        },
+      };
+    }
+    const motivo = datos?.error as MotivoFallo | undefined;
+    return {
+      ok: false,
+      motivo:
+        motivo && ["codigo", "demasiados", "correo_repetido", "datos"].includes(motivo)
+          ? motivo
+          : "servidor",
+    };
+  } catch {
+    return { ok: false, motivo: "red" };
   }
 }
 

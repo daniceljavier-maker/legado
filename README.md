@@ -19,8 +19,20 @@ Next.js 16 (App Router, export estático) · Tailwind 4 · motion · Fraunces + 
 - Tamaños de texto y botones generosos; foco visible; respeta prefers-reduced-motion.
 - Sin dark patterns, sin precios (no aprobados), sin cifras inventadas.
 
+## Registro → base de datos (LG-021, 24 nov 2026)
+- El último paso envía el alta a la función `registrar-alta` (Supabase, sin sesión).
+  Valida, exige código de invitación al Alfa (`?codigo=…` en el enlace) y limita
+  a 8 intentos por hora por conexión. Escribe en una transacción con
+  `fase1.registrar_alta`: narrador, familiar que registra, caja Perfil y
+  Preguntas de la familia (o Semillas si se registra la propia persona).
+- Devuelve el enlace único del narrador (`/narrador/?acceso=…`); `/gracias`
+  lo muestra para copiar o enviar por WhatsApp. No se envían correos todavía.
+- Si lo registró un familiar, el narrador entra por su enlace, ve la bienvenida
+  y acepta él (`consentido_en`). Los importados del MVP entran directos.
+- Códigos: tabla `fase1_interno.codigos_alfa` (usos y máximo por código).
+- Código fuente de las funciones en `supabase/functions/`.
+
 ## Pendiente
-- Persistencia real (hoy localStorage) → Supabase, cuando haya acceso (LG-020).
 - Envío de correo/invitación real.
 - Textos legales definitivos (LG-005).
 - Conectar `/invitacion` con la app del narrador (pieza 2).

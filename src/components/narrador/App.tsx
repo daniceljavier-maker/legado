@@ -20,6 +20,7 @@ import {
 } from "@/lib/narrador";
 import { texto, type Pais } from "@/lib/guion";
 import {
+  aceptarConsentimiento,
   entrarConEnlace,
   leerImportadas,
   olvidarVinculo,
@@ -97,15 +98,16 @@ export function NarradorApp() {
       if (token) {
         const nube = await entrarConEnlace(token);
         if (nube) {
+          // Si lo registró un familiar, primero su bienvenida: acepta él.
           const traido = {
             ...inicial,
             nombre: nube.nombre || inicial.nombre,
             pais: (nube.pais ?? inicial.pais) as Pais,
-            consentido: true,
+            consentido: nube.consentido !== false,
           };
           guardarEstado(traido);
           setE(traido);
-          setPantalla("inicio");
+          setPantalla(traido.consentido ? "inicio" : "bienvenida");
           // Quita el token de la barra de direcciones: es una llave.
           history.replaceState(null, "", location.pathname);
         }
@@ -146,7 +148,7 @@ export function NarradorApp() {
             onListo={() => {
               const listo = { ...e, consentido: true };
               actualizar({ consentido: true });
-              void subirAjustes(listo);
+              void subirAjustes(listo).then(() => aceptarConsentimiento());
               setPantalla("inicio");
             }}
           />
