@@ -1,5 +1,5 @@
 /* Legatum · service worker mínimo: deja la app abrirse sin red. */
-const CACHE = "legatum-narrador-v2";
+const CACHE = "legatum-narrador-v3";
 const BASE = ["/narrador/", "/narrador/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
@@ -17,10 +17,13 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
+  // El manifest personal y el enlace de acceso llevan la llave del narrador: nunca a caché.
+  if (url.pathname.startsWith("/narrador/manifiesto/")) return;
+  const conLlave = url.searchParams.has("acceso");
   e.respondWith(
     fetch(req)
       .then((res) => {
-        if (res.status === 200 && (url.pathname.startsWith("/narrador") || url.pathname.startsWith("/_next/") || url.pathname.startsWith("/assets-next/"))) {
+        if (res.status === 200 && !conLlave && (url.pathname.startsWith("/narrador") || url.pathname.startsWith("/_next/") || url.pathname.startsWith("/assets-next/"))) {
           const copia = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copia));
         }

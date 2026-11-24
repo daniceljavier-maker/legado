@@ -11,6 +11,20 @@ import type { EstadoNarrador, Privacidad, Sesion } from "./narrador";
  */
 
 const CLAVE_ID = "legatum.narrador.id";
+const CLAVE_ACCESO = "legatum.acceso";
+
+/**
+ * El token del enlace del narrador, guardado en este teléfono. Hace falta
+ * para el manifest personal: en iPhone la app instalada abre con él.
+ * Es la misma llave que ya tiene en su enlace.
+ */
+export function leerAcceso(): string | null {
+  try {
+    return localStorage.getItem(CLAVE_ACCESO);
+  } catch {
+    return null;
+  }
+}
 
 function idLocal(): string | null {
   try {
@@ -134,6 +148,7 @@ export async function subirPrivacidad(e: EstadoNarrador, temaId: string, p: Priv
 export function olvidarVinculo() {
   try {
     localStorage.removeItem(CLAVE_ID);
+    localStorage.removeItem(CLAVE_ACCESO);
   } catch {
     // Nada que hacer.
   }
@@ -185,6 +200,11 @@ export async function entrarConEnlace(token: string): Promise<NarradorNube | nul
     if (error) return null;
 
     if (datos.narrador?.id) guardarIdLocal(datos.narrador.id);
+    try {
+      localStorage.setItem(CLAVE_ACCESO, token);
+    } catch {
+      // Sin almacenamiento: el icono no podrá entrar solo, pero la sesión sí.
+    }
     return datos.narrador ?? null;
   } catch {
     return null;

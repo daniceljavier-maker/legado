@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/narrador/manifiesto/:t/",
+      "destination": "https://lxdlsgeabhzyvvrzlzlx.supabase.co/functions/v1/manifiesto-narrador?t=:t"
+    },
+    {
+      "source": "/narrador/manifiesto/:t",
+      "destination": "https://lxdlsgeabhzyvvrzlzlx.supabase.co/functions/v1/manifiesto-narrador?t=:t"
+    }
+  ]
+}

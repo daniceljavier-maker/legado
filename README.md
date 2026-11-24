@@ -32,6 +32,20 @@ Next.js 16 (App Router, export estático) · Tailwind 4 · motion · Fraunces + 
 - Códigos: tabla `fase1_interno.codigos_alfa` (usos y máximo por código).
 - Código fuente de las funciones en `supabase/functions/`.
 
+## App del narrador: guardar en la pantalla de inicio (24 nov 2026)
+- Botón «Guardar en mi pantalla de inicio» en Inicio (fila lima, solo si falta)
+  y en Ayuda y ajustes. Lógica en `src/lib/instalar.ts`, pantalla en
+  `src/components/narrador/Instalar.tsx`.
+- Android/Chrome: lanza el aviso del navegador (`beforeinstallprompt`).
+  iPhone y resto: pasos con dibujos (iOS 26: menú ··· → Compartir).
+- En iPhone la app instalada NO comparte sesión con Safari y abre el
+  `start_url` del manifest. Por eso, cuando el narrador entra por su enlace,
+  la página cambia el manifest por `/narrador/manifiesto/<token>/`, que
+  Vercel reescribe (vercel.json) a la función `manifiesto-narrador`: su
+  `start_url` lleva el enlace y el icono entra solo.
+- El service worker no guarda en caché el manifest personal ni las páginas
+  con `?acceso=`.
+
 ## Pendiente
 - Envío de correo/invitación real.
 - Textos legales definitivos (LG-005).

@@ -22,6 +22,8 @@ import { texto, type Pais } from "@/lib/guion";
 import {
   aceptarConsentimiento,
   entrarConEnlace,
+  hayCuenta,
+  leerAcceso,
   leerImportadas,
   olvidarVinculo,
   subirAjustes,
@@ -30,6 +32,8 @@ import {
   type Importada,
 } from "@/lib/nube";
 import { Oido, callar, decir, ecoAlAzar, secuencia } from "./Julian";
+import { GuardarEnInicio, GuardarEnInicioAjustes } from "./Instalar";
+import { ponerManifestPersonal } from "@/lib/instalar";
 
 /* ---------- piezas comunes ---------- */
 
@@ -94,10 +98,18 @@ export function NarradorApp() {
 
     // ¿Llega por su enlace único? Entonces entra sin teclear nada.
     const token = new URLSearchParams(location.search).get("acceso");
+    const guardado = leerAcceso();
+    // Manifest personal: si guarda la app en la pantalla de inicio, el icono
+    // abre ya con su enlace (en iPhone no comparte sesión con Safari).
+    if (guardado) ponerManifestPersonal(guardado);
     void (async () => {
-      if (token) {
+      if (token && token === guardado && (await hayCuenta())) {
+        // Abierta desde el icono con el mismo enlace y la sesión ya abierta.
+        history.replaceState(null, "", location.pathname);
+      } else if (token) {
         const nube = await entrarConEnlace(token);
         if (nube) {
+          ponerManifestPersonal(token);
           // Si lo registró un familiar, primero su bienvenida: acepta él.
           const traido = {
             ...inicial,
@@ -434,6 +446,7 @@ function Inicio({
       </div>
 
       <div className="flex flex-col gap-2.5">
+        <GuardarEnInicio pais={e.pais} />
         <Fila onClick={onRecuerdos}>Mis recuerdos</Fila>
         <Fila onClick={onAjustes}>Ayuda y ajustes</Fila>
         <p className="text-lg text-smoke text-center mt-1">Solo tú decides qué se comparte.</p>
@@ -842,6 +855,8 @@ function Ajustes({
             Escuchar
           </button>
         </div>
+
+        <GuardarEnInicioAjustes pais={e.pais} />
 
         <div className="min-h-16 bg-paper rounded-2xl px-5 flex items-center justify-between">
           <span className="text-[1.35rem] font-semibold">Pausar mi proyecto</span>
