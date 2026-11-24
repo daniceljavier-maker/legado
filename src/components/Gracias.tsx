@@ -54,7 +54,9 @@ export function Gracias() {
                   : `Este es el enlace de ${quien} para hablar con Julián. Compártelo con ${quien}, mejor en persona o por WhatsApp. Es su llave: no lo publiques en ningún sitio.`}
             </p>
 
-            {alta && <Enlace alta={alta} quien={quien} esYo={esYo} />}
+            {alta && (
+              <Enlace alta={alta} quien={quien} esYo={esYo} espana={r?.narrador.pais === "ES"} />
+            )}
 
             <ol className="mt-12 grid gap-6 md:grid-cols-3 animate-fade-up stagger-4">
               <Paso
@@ -99,7 +101,30 @@ export function Gracias() {
   );
 }
 
-function Enlace({ alta, quien, esYo }: { alta: Alta; quien: string; esYo: boolean }) {
+/** Mensaje precargado de WhatsApp (elegido por Dan el 24 nov: «cálido y claro»). */
+function mensajeWhatsApp(quien: string, enlace: string, espana: boolean) {
+  return espana
+    ? `Hola, ${quien}. Te he preparado un regalo: unas conversaciones con Julián, un asistente de voz que te preguntará por tu vida y por lo que has aprendido. Lo que cuentes se guarda para la familia, y tú decides qué se comparte.
+
+Ábrelo cuando tengas un rato tranquilo y toca «Hablar con Julián»:
+${enlace}`
+    : `Hola, ${quien}. Te preparé un regalo: unas pláticas con Julián, un asistente de voz que te va a preguntar por tu vida y por lo que has aprendido. Lo que cuentes se guarda para la familia, y tú decides qué se comparte.
+
+Ábrelo cuando tengas un rato tranquilo y toca «Hablar con Julián»:
+${enlace}`;
+}
+
+function Enlace({
+  alta,
+  quien,
+  esYo,
+  espana,
+}: {
+  alta: Alta;
+  quien: string;
+  esYo: boolean;
+  espana: boolean;
+}) {
   const [copiado, setCopiado] = useState(false);
 
   const copiar = async () => {
@@ -112,7 +137,7 @@ function Enlace({ alta, quien, esYo }: { alta: Alta; quien: string; esYo: boolea
     }
   };
 
-  const mensaje = `Hola, ${quien}. Te he preparado algo: conversaciones con Julián para guardar tus recuerdos. Ábrelo cuando tengas un rato tranquilo: ${alta.enlace}`;
+  const mensaje = mensajeWhatsApp(quien, alta.enlace, espana);
 
   return (
     <div className="mt-10 rounded-[24px] bg-paper/90 backdrop-blur-sm border border-bark/10 p-5 md:p-6 animate-fade-up stagger-4">

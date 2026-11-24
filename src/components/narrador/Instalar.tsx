@@ -9,13 +9,14 @@ import { leerAcceso } from "@/lib/nube";
 
 /**
  * «Guardar en mi pantalla de inicio».
- * Si el navegador tiene su propio aviso (Android, Chrome), lo lanza.
- * Si no (iPhone, WhatsApp…), enseña los pasos con dibujos grandes.
- * Desaparece cuando la app ya está instalada.
+ * Se ofrece al terminar una conversación (OfrecerInstalar, decisión de Dan
+ * 24 nov) y está siempre en Ayuda y ajustes. Si el navegador tiene su
+ * propio aviso (Android, Chrome), lo lanza; si no (iPhone, WhatsApp…),
+ * enseña los pasos con dibujos grandes. Nada de esto sale si ya está instalada.
  */
 
-const fila =
-  "min-h-16 rounded-xl px-5 flex items-center gap-3 text-[1.35rem] font-medium transition-transform active:scale-[0.98]";
+const CLAVE_OFRECIDO = "legatum.instalar.ofrecido";
+const MAX_OFERTAS = 2; // tras la 1.ª conversación y, si dijo «Ahora no», tras la 2.ª
 const btnOscuro =
   "w-full min-h-[4.5rem] rounded-xl bg-ember text-paper text-2xl font-semibold flex items-center justify-center px-6 transition-transform active:scale-[0.98]";
 const btnClaro =
@@ -34,18 +35,83 @@ function useAccion() {
   return { ...ins, pasos, pulsar, cerrar: () => setPasos(false) };
 }
 
-/** Para la pantalla principal: una fila destacada, solo si falta instalar. */
-export function GuardarEnInicio({ pais }: { pais: Pais }) {
+function vecesOfrecido(): number {
+  try {
+    return Number(localStorage.getItem(CLAVE_OFRECIDO) ?? 0) || 0;
+  } catch {
+    return MAX_OFERTAS; // sin almacenamiento, no insistimos
+  }
+}
+
+/**
+ * Al terminar una conversación: «¿Te guardo para la próxima vez?».
+ * Sale a los dos segundos del «Gracias», como mucho dos veces en total.
+ */
+export function OfrecerInstalar({ pais }: { pais: Pais }) {
   const a = useAccion();
-  if (a.instalada !== false) return null;
-  return (
-    <>
-      <button onClick={a.pulsar} className={`${fila} bg-lima text-bark`}>
-        <IconoAnadir className="w-7 h-7 shrink-0" />
-        <span className="flex-1 text-left leading-snug">Guardar en mi pantalla de inicio</span>
-      </button>
-      {a.pasos && <Pasos plataforma={a.plataforma} pais={pais} onCerrar={a.cerrar} />}
-    </>
+  const [abierta, setAbierta] = useState(false);
+
+  useEffect(() => {
+    if (a.instalada !== false || vecesOfrecido() >= MAX_OFERTAS) return;
+    const t = setTimeout(() => {
+      setAbierta(true);
+      try {
+        localStorage.setItem(CLAVE_OFRECIDO, String(vecesOfrecido() + 1));
+      } catch {
+        /* sin almacenamiento */
+      }
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [a.instalada]);
+
+  // Con la hoja abierta, la página de debajo no se mueve.
+  useEffect(() => {
+    if (!abierta) return;
+    const antes = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = antes;
+    };
+  }, [abierta]);
+
+  if (a.pasos) return <Pasos plataforma={a.plataforma} pais={pais} onCerrar={a.cerrar} />;
+  if (!abierta || a.instalada !== false) return null;
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ofrecer-titulo"
+      className="fixed inset-0 z-40 bg-bark/40 flex items-end justify-center"
+    >
+      <div className="w-full max-w-md bg-cream rounded-t-[28px] px-6 pt-7 pb-8 flex flex-col gap-4 shadow-2xl">
+        <div className="w-14 h-14 rounded-2xl bg-lima flex items-center justify-center">
+          <IconoAnadir className="w-8 h-8 text-bark" />
+        </div>
+        <h2 id="ofrecer-titulo" className="font-display text-[2.25rem] leading-[1.1]">
+          ¿Te guardo para la próxima vez?
+        </h2>
+        <p className="text-xl text-smoke leading-snug">
+          Ponme en la pantalla de inicio de tu teléfono y entrarás con un toque, sin buscar el
+          enlace.
+        </p>
+        <div className="flex flex-col gap-3 mt-2">
+          <button
+            onClick={() => {
+              setAbierta(false);
+              void a.pulsar();
+            }}
+            className={btnOscuro}
+          >
+            Guardar en mi pantalla de inicio
+          </button>
+          <button onClick={() => setAbierta(false)} className={btnClaro}>
+            Ahora no
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

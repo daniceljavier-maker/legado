@@ -32,7 +32,7 @@ import {
   type Importada,
 } from "@/lib/nube";
 import { Oido, callar, decir, ecoAlAzar, secuencia } from "./Julian";
-import { GuardarEnInicio, GuardarEnInicioAjustes } from "./Instalar";
+import { GuardarEnInicioAjustes, OfrecerInstalar } from "./Instalar";
 import { ponerManifestPersonal } from "@/lib/instalar";
 
 /* ---------- piezas comunes ---------- */
@@ -155,7 +155,6 @@ export function NarradorApp() {
           <Bienvenida
             nombre={e.nombre}
             pais={e.pais}
-            onPais={(pais) => actualizar({ pais })}
             onNombre={(nombre) => actualizar({ nombre })}
             onListo={() => {
               const listo = { ...e, consentido: true };
@@ -212,10 +211,6 @@ export function NarradorApp() {
         {pantalla === "ajustes" && (
           <Ajustes
             e={e}
-            onPais={(pais) => {
-              actualizar({ pais });
-              void subirAjustes({ ...e, pais });
-            }}
             onLetra={(letra) => {
               actualizar({ letra });
               void subirAjustes({ ...e, letra });
@@ -234,13 +229,11 @@ export function NarradorApp() {
 function Bienvenida({
   nombre,
   pais,
-  onPais,
   onNombre,
   onListo,
 }: {
   nombre: string;
   pais: Pais;
-  onPais: (p: Pais) => void;
   onNombre: (n: string) => void;
   onListo: () => void;
 }) {
@@ -308,17 +301,6 @@ function Bienvenida({
               className="min-h-16 rounded-xl bg-paper px-5 text-2xl border-2 border-transparent focus:border-bark outline-none"
             />
           </label>
-          <div className="flex flex-col gap-2">
-            <span className="text-lg text-smoke">¿Cómo prefieres que hable yo?</span>
-            <div className="flex gap-2" role="group" aria-label="Acento de Julián">
-              <Opcion activa={pais === "mx"} onClick={() => onPais("mx")}>
-                De México
-              </Opcion>
-              <Opcion activa={pais === "es"} onClick={() => onPais("es")}>
-                De España
-              </Opcion>
-            </div>
-          </div>
         </div>
       )}
 
@@ -446,7 +428,6 @@ function Inicio({
       </div>
 
       <div className="flex flex-col gap-2.5">
-        <GuardarEnInicio pais={e.pais} />
         <Fila onClick={onRecuerdos}>Mis recuerdos</Fila>
         <Fila onClick={onAjustes}>Ayuda y ajustes</Fila>
         <p className="text-lg text-smoke text-center mt-1">Solo tú decides qué se comparte.</p>
@@ -696,6 +677,7 @@ function Cierre({
           Hasta la próxima
         </button>
       </div>
+      <OfrecerInstalar pais={pais} />
     </>
   );
 }
@@ -801,13 +783,11 @@ function Opcion({ activa, onClick, children }: { activa: boolean; onClick: () =>
 
 function Ajustes({
   e,
-  onPais,
   onLetra,
   onPausa,
   onVolver,
 }: {
   e: EstadoNarrador;
-  onPais: (p: Pais) => void;
   onLetra: (l: Letra) => void;
   onPausa: (p: boolean) => void;
   onVolver: () => void;
@@ -839,21 +819,6 @@ function Ajustes({
               </button>
             ))}
           </div>
-        </div>
-
-        <div className={card}>
-          <span className="text-[1.35rem] font-semibold">Cómo habla Julián</span>
-          <div className="flex gap-2" role="group" aria-label="Acento de Julián">
-            <Opcion activa={e.pais === "mx"} onClick={() => onPais("mx")}>
-              De México
-            </Opcion>
-            <Opcion activa={e.pais === "es"} onClick={() => onPais("es")}>
-              De España
-            </Opcion>
-          </div>
-          <button onClick={() => decir(e.pais, "ajustes")} className={btnLight}>
-            Escuchar
-          </button>
         </div>
 
         <GuardarEnInicioAjustes pais={e.pais} />
