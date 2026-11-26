@@ -107,7 +107,13 @@ export function leerRegistro(): Registro | null {
 /* ---------- envío a la base de datos (LG-021) ---------- */
 
 /** Lo que devuelve el alta: el enlace único de quien narra. */
-export type Alta = { narradorId: string; enlace: string; creadoEn: string };
+export type Alta = {
+  narradorId: string;
+  enlace: string;
+  /** Enlace del familiar que registra para consultar el legado (LG-025). */
+  enlaceFamilia?: string;
+  creadoEn: string;
+};
 
 export type MotivoFallo =
   | "codigo"
@@ -191,6 +197,7 @@ export async function enviarRegistro(
         alta: {
           narradorId: datos.narrador_id,
           enlace: `${location.origin}${datos.enlace}`,
+          ...(datos.enlace_familia ? { enlaceFamilia: `${location.origin}${datos.enlace_familia}` } : {}),
           creadoEn: new Date().toISOString(),
         },
       };

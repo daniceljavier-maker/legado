@@ -25,6 +25,9 @@ import {
   hayCuenta,
   leerAcceso,
   leerImportadas,
+  leerMiLegado,
+  type MiConversacion,
+  type MiRecuerdo,
   olvidarVinculo,
   subirAjustes,
   subirPrivacidad,
@@ -33,6 +36,10 @@ import {
 } from "@/lib/nube";
 import { Oido, callar, decir, ecoAlAzar, secuencia } from "./Julian";
 import { GuardarEnInicioAjustes, OfrecerInstalar } from "./Instalar";
+import { EnVivo } from "./EnVivo";
+
+/** Las conversaciones en vivo no siguen un tema del guion: las guía el briefing. */
+const CONVERSACION_VIVA: Tema = { id: "julian", titulo: "Conversación con Julián", preguntas: [] };
 import { ponerManifestPersonal } from "@/lib/instalar";
 
 /* ---------- piezas comunes ---------- */
@@ -80,6 +87,8 @@ const card = "bg-paper rounded-2xl p-5 flex flex-col gap-3";
 export function NarradorApp() {
   const [e, setE] = useState<EstadoNarrador | null>(null);
   const [pantalla, setPantalla] = useState<Pantalla>("inicio");
+  // Con cuenta (entró por su enlace) habla con Julián en vivo; sin ella, el guion de prueba.
+  const [conCuenta, setConCuenta] = useState(false);
   const [temaActual, setTemaActual] = useState<Tema | null>(null);
   const [ultima, setUltima] = useState<{ tema: Tema; segundos: number; reservado: number } | null>(null);
   const [importadas, setImportadas] = useState<Importada[]>([]);
@@ -124,6 +133,7 @@ export function NarradorApp() {
           history.replaceState(null, "", location.pathname);
         }
       }
+      setConCuenta(await hayCuenta());
       setImportadas(await leerImportadas());
     })();
   }, []);
@@ -167,7 +177,12 @@ export function NarradorApp() {
         {pantalla === "inicio" && (
           <Inicio
             e={e}
+            enVivo={conCuenta}
             onHablar={(t) => {
+              if (conCuenta) {
+                setPantalla("envivo");
+                return;
+              }
               setTemaActual(t);
               setPantalla("sesion");
             }}
@@ -188,6 +203,18 @@ export function NarradorApp() {
             }}
           />
         )}
+        {pantalla === "envivo" && (
+          <EnVivo
+            onTerminar={(segundos) => {
+              // La sesión y su transcripción ya viven en el servidor: aquí solo el registro local.
+              const sesion = { temaId: CONVERSACION_VIVA.id, inicio: new Date().toISOString(), segundos, reservado: 0 };
+              actualizar({ sesiones: [...e.sesiones, sesion] });
+              setUltima({ tema: CONVERSACION_VIVA, segundos, reservado: 0 });
+              setPantalla("cierre");
+            }}
+            onVolver={() => setPantalla("inicio")}
+          />
+        )}
         {pantalla === "cierre" && ultima && (
           <Cierre
             nombre={e.nombre}
@@ -200,6 +227,7 @@ export function NarradorApp() {
         {pantalla === "recuerdos" && (
           <Recuerdos
             e={e}
+            vivo={conCuenta}
             importadas={importadas}
             onPrivacidad={(id, p) => {
               actualizar({ privacidad: { ...e.privacidad, [id]: p } });
@@ -388,11 +416,13 @@ function Medidor({ nivel }: { nivel: number }) {
 
 function Inicio({
   e,
+  enVivo,
   onHablar,
   onRecuerdos,
   onAjustes,
 }: {
   e: EstadoNarrador;
+  enVivo: boolean;
   onHablar: (t: Tema) => void;
   onRecuerdos: () => void;
   onAjustes: () => void;
@@ -405,7 +435,13 @@ function Inicio({
       <Marca />
       <div className="flex flex-col gap-2 mt-4 animate-fade-up">
         <h1 className="font-display text-[2.75rem] leading-[1.05]">{saludo(e.nombre)}</h1>
-        <p className="text-2xl leading-snug">Hoy: {tema.titulo.toLowerCase()}.</p>
+        <p className="text-2xl leading-snug">
+          {enVivo
+            ? n === 1
+              ? "Hoy: conocernos."
+              : "Hoy: seguimos donde lo dejamos."
+            : `Hoy: ${tema.titulo.toLowerCase()}.`}
+        </p>
         <p className="text-xl text-smoke">
           Sesión {n} · tú decides cuánto rato
           {e.pausado ? " · proyecto en pausa" : ""}
@@ -641,10 +677,13 @@ function Cierre({
   onRecuerdos: () => void;
   onInicio: () => void;
 }) {
+  const enVivo = ultima.tema.id === CONVERSACION_VIVA.id;
   useEffect(() => {
+    // En vivo, Julián ya se despidió con su voz: no repetimos la despedida grabada.
+    if (enVivo) return;
     decir(pais, "cierre");
     return () => callar();
-  }, [pais]);
+  }, [pais, enVivo]);
 
   return (
     <>
@@ -665,7 +704,9 @@ function Cierre({
       <div className={`${card} animate-fade-up stagger-3`}>
         <span className="text-lg text-smoke font-medium">Lo que me has contado, en pocas líneas</span>
         <p className="text-[1.35rem] leading-snug text-smoke">
-          Aquí irá un resumen escrito por Julián, que podrás corregir. Llega con la voz real y el «cerebro» de Legatum.
+          {enVivo
+            ? "Lo que contaste queda guardado. Julián lo ordenará para tus recuerdos."
+            : "Aquí irá un resumen escrito por Julián, que podrás corregir. Llega con la voz real y el «cerebro» de Legatum."}
         </p>
       </div>
       <div className="flex-1" />
@@ -686,11 +727,13 @@ function Cierre({
 
 function Recuerdos({
   e,
+  vivo,
   importadas,
   onPrivacidad,
   onVolver,
 }: {
   e: EstadoNarrador;
+  vivo: boolean;
   importadas: Importada[];
   onPrivacidad: (id: string, p: Privacidad) => void;
   onVolver: () => void;
@@ -699,6 +742,10 @@ function Recuerdos({
   const fecha = (iso: string) =>
     new Date(iso).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
   const privImportado: Privacidad = e.privacidad.importado ?? "solo-yo";
+  const [legado, setLegado] = useState<{ conversaciones: MiConversacion[]; recuerdos: MiRecuerdo[] } | null>(null);
+  useEffect(() => {
+    if (vivo) void leerMiLegado().then(setLegado);
+  }, [vivo]);
 
   return (
     <>
@@ -736,7 +783,46 @@ function Recuerdos({
           </div>
         </div>
       )}
-      <div className="flex flex-col gap-3">
+      {vivo && legado && (
+        <div className="flex flex-col gap-3">
+          {legado.conversaciones.length === 0 ? (
+            <div className={card}>
+              <span className="text-xl text-smoke leading-snug">
+                Todavía no hemos hablado. Cuando terminemos nuestra primera conversación, aquí verás lo que contaste.
+              </span>
+            </div>
+          ) : (
+            legado.conversaciones.map((c) => (
+              <div key={c.id} className={card}>
+                <span className="text-2xl font-semibold">
+                  {c.numero ? `Conversación ${c.numero}` : "Conversación"} · {fecha(c.fecha)}
+                </span>
+                <span className="text-xl text-smoke leading-snug">
+                  {c.resumen ?? (c.lista ? "Guardada." : "Julián la está ordenando. Vuelve en unos minutos.")}
+                </span>
+              </div>
+            ))
+          )}
+          {legado.recuerdos.length > 0 && (
+            <div className={card}>
+              <span className="text-lg text-smoke font-medium">Lo que has contado</span>
+              <ul className="flex flex-col gap-3">
+                {legado.recuerdos.map((r, i) => (
+                  <li key={i} className="flex flex-col gap-0.5">
+                    <span className="text-xl font-semibold leading-snug">{r.titulo}</span>
+                    {r.texto && <span className="text-lg text-smoke leading-snug">{r.texto}</span>}
+                    {r.sesion && <span className="text-base text-smoke/80">Conversación {r.sesion}</span>}
+                  </li>
+                ))}
+              </ul>
+              <span className="text-lg text-smoke leading-snug">
+                Si algo no quieres que lo vea tu familia, díselo a Julián en la próxima conversación: «esto no lo compartas».
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+      <div className={`flex flex-col gap-3 ${vivo ? "hidden" : ""}`}>
         {TEMAS.map((t) => {
           const n = cuenta(t.id);
           const p: Privacidad = e.privacidad[t.id] ?? "familia";

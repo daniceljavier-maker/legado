@@ -12,9 +12,14 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
  * fase1.legado_compartible). No se escribe su contenido en los logs.
  * La funcion se autentica con la firma HMAC de ElevenLabs, por eso no pide JWT.
  *
+ * Al guardar, lanza el cerebro (procesar-sesion) en segundo plano.
+ *
  * Secretos: ALFA_ELEVENLABS_WEBHOOK_SECRET y ALFA_ELEVENLABS_AGENT_ID.
  * Se despliega en el proyecto Supabase legado-mvp con verify_jwt = false.
  */
+
+// Tareas que siguen después de responder (runtime de Supabase).
+declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
 const SECRETO = Deno.env.get("ALFA_ELEVENLABS_WEBHOOK_SECRET") ?? "";
 const AGENTE = Deno.env.get("ALFA_ELEVENLABS_AGENT_ID") ?? "";
@@ -137,5 +142,19 @@ Deno.serve(async (req) => {
     console.warn("sesion inexistente", sesionId);
     return responder({ ignorado: "sesion inexistente" });
   }
+
+  // El cerebro (procesador + preparador) trabaja después de contestar a ElevenLabs.
+  const cerebro = fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/procesar-sesion`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ sesion_id: sesionId }),
+  })
+    .then((r) => r.ok || console.error("cerebro", r.status))
+    .catch((e) => console.error("cerebro", String(e)));
+  if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(cerebro);
+
   return responder({ ok: true });
 });

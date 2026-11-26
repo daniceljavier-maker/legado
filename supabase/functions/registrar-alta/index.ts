@@ -10,8 +10,9 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
  *  - escribe todo en una sola transacción con fase1.registrar_alta,
  *    que solo puede ejecutar el service role.
  *
- * Devuelve el enlace único del narrador. En el Alfa no se envían correos:
- * quien registra comparte ese enlace a mano.
+ * Devuelve el enlace único del narrador y, si registra un familiar, el suyo
+ * para consultar el legado. En el Alfa no se envían correos: quien registra
+ * comparte el enlace del narrador a mano.
  */
 
 const cors = {
@@ -124,7 +125,7 @@ Deno.serve(async (req) => {
     return responder({ error: "servidor" }, 500);
   }
 
-  const r = data as { error?: string; narrador_id?: string; token?: string };
+  const r = data as { error?: string; narrador_id?: string; token?: string; token_familia?: string };
   if (r?.error === "codigo") return responder({ error: "codigo" }, 403);
   if (r?.error === "demasiados") return responder({ error: "demasiados" }, 429);
   if (r?.error === "correo_repetido") return responder({ error: "correo_repetido" }, 409);
@@ -134,5 +135,7 @@ Deno.serve(async (req) => {
     ok: true,
     narrador_id: r.narrador_id,
     enlace: `/narrador/?acceso=${r.token}`,
+    // Si registra un familiar: su propio enlace para consultar el legado (LG-025).
+    ...(r.token_familia ? { enlace_familia: `/familia/?acceso=${r.token_familia}` } : {}),
   });
 });

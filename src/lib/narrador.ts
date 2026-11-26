@@ -9,6 +9,7 @@ export type Pantalla =
   | "bienvenida"
   | "inicio"
   | "sesion"
+  | "envivo"
   | "cierre"
   | "recuerdos"
   | "ajustes";

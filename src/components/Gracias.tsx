@@ -57,6 +57,7 @@ export function Gracias() {
             {alta && (
               <Enlace alta={alta} quien={quien} esYo={esYo} espana={r?.narrador.pais === "ES"} />
             )}
+            {alta?.enlaceFamilia && !esYo && <EnlaceFamilia enlace={alta.enlaceFamilia} quien={quien} />}
 
             <ol className="mt-12 grid gap-6 md:grid-cols-3 animate-fade-up stagger-4">
               <Paso
@@ -91,8 +92,8 @@ export function Gracias() {
             )}
 
             <p className="mt-10 text-sm text-smoke/80 max-w-xl animate-fade-up stagger-6">
-              Alfa: todavía no enviamos correos. El enlace solo aparece aquí, en
-              este navegador; cópialo antes de cerrar.
+              Alfa: todavía no enviamos correos. Los enlaces solo aparecen aquí, en
+              este navegador; cópialos antes de cerrar.
             </p>
           </>
         )}
@@ -165,6 +166,45 @@ function Enlace({
             Enviar por WhatsApp
           </a>
         )}
+        <button
+          type="button"
+          onClick={copiar}
+          className="inline-flex items-center px-6 py-4 border border-bark/15 rounded-full text-bark hover:border-bark/40 transition-colors"
+        >
+          <span aria-live="polite">{copiado ? "Copiado" : "Copiar enlace"}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** LG-025: el enlace del familiar que registra, para preguntar por la historia. */
+function EnlaceFamilia({ enlace, quien }: { enlace: string; quien: string }) {
+  const [copiado, setCopiado] = useState(false);
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(enlace);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2500);
+    } catch {
+      /* sigue a la vista para copiarlo a mano */
+    }
+  };
+  return (
+    <div className="mt-5 rounded-[24px] bg-paper/90 backdrop-blur-sm border border-bark/10 p-5 md:p-6 animate-fade-up stagger-4">
+      <p className="text-xs tracking-[0.25em] uppercase text-smoke mb-3">Tu enlace para preguntar</p>
+      <p className="text-base text-smoke leading-relaxed mb-3">
+        Cuando {quien} haya hablado con Julián, entra aquí para preguntar por su historia. Es solo
+        para ti: guárdalo y no lo compartas.
+      </p>
+      <p className="font-mono text-sm text-bark break-all select-all bg-cream rounded-xl px-4 py-3">{enlace}</p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <a
+          href={enlace}
+          className="inline-flex items-center px-6 py-4 border border-bark/15 rounded-full text-bark hover:border-bark/40 transition-colors"
+        >
+          Abrir
+        </a>
         <button
           type="button"
           onClick={copiar}

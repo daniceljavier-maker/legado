@@ -134,6 +134,55 @@ export async function subirSesion(e: EstadoNarrador, s: Sesion) {
   });
 }
 
+/* ---------- Julián en vivo (LG-024) ---------- */
+
+export type Arranque = {
+  sesion_id: string;
+  numero: number;
+  voz: string;
+  variables: { sesion_id: string; saludo: string; briefing: string };
+  conversation_token?: string;
+  signed_url?: string;
+};
+
+export type FalloArranque =
+  | "sin_sesion"
+  | "sin_narrador"
+  | "sin_consentimiento"
+  | "pausado"
+  | "limite_dia"
+  | "falta_configuracion"
+  | "elevenlabs"
+  | "red"
+  | "servidor";
+
+/**
+ * Pide al servidor lo necesario para hablar con Julián: la sesión creada,
+ * el briefing, la voz y una credencial de un solo uso de ElevenLabs.
+ */
+export async function iniciarConversacion(): Promise<
+  { ok: true; datos: Arranque } | { ok: false; motivo: FalloArranque }
+> {
+  if (!supabase) return { ok: false, motivo: "sin_sesion" };
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return { ok: false, motivo: "sin_sesion" };
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/iniciar-conversacion`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+      },
+    });
+    const cuerpo = await res.json().catch(() => null);
+    if (res.ok && cuerpo?.sesion_id) return { ok: true, datos: cuerpo as Arranque };
+    return { ok: false, motivo: (cuerpo?.error as FalloArranque) ?? "servidor" };
+  } catch {
+    return { ok: false, motivo: "red" };
+  }
+}
+
 /** Quién puede ver cada tema. */
 export async function subirPrivacidad(e: EstadoNarrador, temaId: string, p: Privacidad) {
   const id = await asegurarNarrador(e);
@@ -227,6 +276,48 @@ export async function leerImportadas(): Promise<Importada[]> {
     fecha: s.inicio as string,
     caracteres: ((s.transcripcion as string | null) ?? "").length,
   }));
+}
+
+/* ---------- Mis recuerdos desde la base de datos (cerebro) ---------- */
+
+export type MiConversacion = { id: string; numero: number | null; fecha: string; resumen: string | null; lista: boolean };
+export type MiRecuerdo = { caja: string; titulo: string; texto: string; sesion: number | null };
+
+/**
+ * Las conversaciones en vivo con Julián y lo que el cerebro guardó de ellas
+ * (recuerdos, consejos y valores). Solo lo que el narrador puede ver de sí mismo.
+ */
+export async function leerMiLegado(): Promise<{ conversaciones: MiConversacion[]; recuerdos: MiRecuerdo[] }> {
+  const vacio = { conversaciones: [], recuerdos: [] };
+  if (!supabase || !(await hayCuenta())) return vacio;
+  const [ses, caj] = await Promise.all([
+    supabase
+      .from("sesiones")
+      .select("id, numero, inicio, resumen, procesada_en")
+      .eq("tema_id", "julian")
+      .not("transcripcion", "is", null)
+      .order("inicio", { ascending: false }),
+    supabase
+      .from("cajas")
+      .select("caja, contenido, sesiones(numero)")
+      .in("caja", ["recuerdos", "consejos_valores"])
+      .order("creado_en", { ascending: false }),
+  ]);
+  const conversaciones = (ses.data ?? []).map((s) => ({
+    id: s.id as string,
+    numero: (s.numero as number | null) ?? null,
+    fecha: s.inicio as string,
+    resumen: (s.resumen as string | null) ?? null,
+    lista: Boolean(s.procesada_en),
+  }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recuerdos = (caj.data ?? []).map((f: any) => {
+    const c = f.contenido ?? {};
+    const titulo = String(c.titulo ?? (f.caja === "consejos_valores" ? (c.tipo === "valor" ? "Un valor" : "Un consejo") : "Un recuerdo"));
+    const texto = String(c.frase_textual ? `«${c.frase_textual}»` : c.que_paso ?? c.texto ?? "");
+    return { caja: f.caja as string, titulo, texto, sesion: f.sesiones?.numero ?? null };
+  });
+  return { conversaciones, recuerdos };
 }
 
 /** Cierra la sesión en la nube (el teléfono conserva lo suyo). */

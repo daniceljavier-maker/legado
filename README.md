@@ -46,6 +46,22 @@ Next.js 16 (App Router, export estático) · Tailwind 4 · motion · Fraunces + 
 - El service worker no guarda en caché el manifest personal ni las páginas
   con `?acceso=`.
 
+## Julián en vivo, cerebro y consulta del familiar (26 nov 2026)
+- **Julián en vivo (LG-024).** «Hablar con Julián» (con cuenta, es decir, entrando por
+  su enlace) abre `EnVivo.tsx`: pide a `iniciar-conversacion` la sesión, el briefing,
+  el saludo, la voz (Leo MX, Rafa N Warm ES) y un token WebRTC de ElevenLabs, y conecta
+  con `@elevenlabs/client`. La 1.ª sesión se prepara con el registro; las siguientes,
+  con lo que deja el preparador. Sin cuenta, sigue el guion pregrabado de prueba.
+- **Cerebro.** El webhook guarda la transcripción y lanza `procesar-sesion`:
+  procesador (cajas, privado, peticiones, alertas, intención, resumen) y preparador
+  (briefing + saludo de la siguiente). Prompts del 06.
+- **Consulta del familiar (LG-025).** Quien registra recibe su enlace
+  `/familia/?acceso=…` (en `/gracias`). `consultar-legado` responde solo con
+  `fase1.legado_compartible`, cita la sesión y, si no consta, permite pedir que
+  Julián lo pregunte (caja Preguntas de la familia, origen «familia»).
+- **Secretos necesarios en Supabase:** `ELEVENLABS_API_KEY` y `AI_GATEWAY_API_KEY`
+  (o `ANTHROPIC_API_KEY`). Opcionales: `CEREBRO_MODELO`, `CONSULTA_MODELO`, `ALFA_VOZ_ES`.
+
 ## Pendiente
 - Envío de correo/invitación real.
 - Textos legales definitivos (LG-005).
